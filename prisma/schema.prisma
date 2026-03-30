@@ -1,0 +1,164 @@
+// prisma/schema.prisma
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// =============== CORE ENTITIES ===============
+
+model Contact {
+  id               String   @id @default(uuid())
+  name             String?
+  phone            String   // WhatsApp phone
+  email            String?
+  company          String?
+  profile          String?  // Ex: "Arquiteto", "Construtora", "Pessoa Física"
+  country          String   @default("BR")
+  lastHumanOwner   String?
+
+  // Relationships
+  budgets          Budget[]
+  opportunities    Opportunity[]
+  
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@unique([phone])
+  @@index([phone])
+}
+
+model Budget {
+  id               String   @id @default(uuid())
+  externalId       String?  // ERP ID
+  
+  contactId        String
+  contact          Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  
+  productName      String?
+  budgetValue      Decimal?
+  budgetDate       DateTime
+  projectName      String?
+  city             String?
+  status           String?  // "sent", "pending", "accepted", "denied"
+  notes            String?  @db.Text
+  source           String   @default("legacy_budget")
+
+  // Relationships
+  opportunities    Opportunity[]
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([contactId])
+  @@index([budgetDate])
+}
+
+model Opportunity {
+  id                  String   @id @default(uuid())
+  
+  budgetId            String
+  budget              Budget   @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+  
+  contactId           String
+  contact             Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  // Status & Logic
+  stage               String   @default("reactivation_pending") // "reactivation_pending", "contacted", "replied", "human_handoff", "closed"
+  temperature         String   @default("warm")                 // "cold", "warm", "hot"
+  priorityScore       Int      @default(0)
+  
+  // Timelines
+  nextFollowupAt      DateTime?
+  lastOutreachAt      DateTime?
+  lastResponseAt      DateTime?
+  
+  // Ownership
+  ownerType           String   @default("agent")              // "agent" | "human"
+  humanOwner          String?
+  
+  reactivationReason  String?
+
+  // Relationships
+  messages            Message[]
+
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([budgetId])
+  @@index([contactId])
+  @@index([stage])
+  @@index([priorityScore])
+}
+
+model Message {
+  id               String   @id @default(uuid())
+  
+  opportunityId    String
+  opportunity      Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  
+  direction        String   // "incoming" | "outgoing"
+  channel          String   @default("whatsapp")
+  content          String   @db.Text
+  
+  sentAt           DateTime? @default(now())
+  deliveryStatus   String?   // "sent", "delivered", "read", "failed"
+  intentDetected   String?
+  
+  rawPayload       Json?
+
+  createdAt        DateTime @default(now())
+
+  @@index([opportunityId])
+  @@index([createdAt])
+}
+
+model CampaignRule {
+  id                     String   @id @default(uuid())
+  name                   String
+  
+  minDaysSinceBudget     Int      @default(7)
+  maxDaysSinceBudget     Int?
+  allowedProducts        String[] @default([])
+  cooldownDays           Int      @default(15)
+  enabled                Boolean  @default(true)
+  
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+}
+
+// =============== SYSTEM MANAGEMENT ===============
+
+model JobLog {
+  id                String    @id @default(uuid())
+  jobType           String
+  status            String
+  processedCount    Int       @default(0)
+  error             String?   @db.Text
+  startedAt         DateTime  @default(now())
+  completedAt       DateTime?
+  duration          Int?      // ms
+
+  @@index([jobType])
+  @@index([startedAt])
+}
+
+model SystemHealth {
+  id                String    @id @default(uuid())
+  uazapiStatus      String    @default("unknown")
+  chatwootStatus    String    @default("unknown")
+  openaiStatus      String    @default("unknown")
+  lastChecked       DateTime  @default(now())
+
+  @@index([lastChecked])
+}
+enum JobStatus {
+  RUNNING
+  SUCCESS
+  FAILED
+  PARTIAL
+}

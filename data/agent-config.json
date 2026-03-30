@@ -1,0 +1,23 @@
+{
+  "autoReplyEnabled": true,
+  "companyName": "Agile",
+  "objective": "Qualificar leads, sanar dúvidas técnicas sobre escoramentos/andaimes e avançar para orçamento comercial.",
+  "tone": "consultivo, técnico e cordial",
+  "language": "português do Brasil",
+  "maxReplyChars": 420,
+  "businessNiche": "SaaS B2B",
+  "salesType": "consultiva",
+  "primaryCTA": "Posso te mostrar o próximo passo ideal para o seu cenário?",
+  "qualificationQuestions": [
+    "Qual principal desafio você quer resolver agora?",
+    "Qual prazo você tem para implementar?",
+    "Quem participa da decisão?"
+  ],
+  "customPrompt": "",
+  "fallbackMessage": "Perfeito! Posso te ajudar com o próximo passo agora.",
+  "emojisEnabled": true,
+  "handoffEnabled": true,
+  "sendToChatwoot": true,
+  "sendToSlack": false,
+  "disallowedTerms": []
+}
