@@ -2,8 +2,8 @@ import { FastifyRequest, FastifyReply } from 'fastify';
 import { logger } from '../../shared/logger';
 import { prisma } from '../../shared/db';
 import { intentDetector } from '../intents/intent-detector';
-import { chatwootService } from './chatwoot.service';
-import { messageBuilder } from './message.builder';
+import { whatsappProvider } from './whatsapp.provider';
+import { extractOutgoingMessageData, isOutgoingChatwootEvent } from './chatwoot-webhook';
 
 export class WebhookHandler {
   async handleUazapi(request: FastifyRequest, reply: FastifyReply) {
@@ -79,6 +79,30 @@ export class WebhookHandler {
     } catch (error) {
       logger.error({ error, phone }, `${logTag} Failed to handle webhook`);
       return reply.code(500).send();
+    }
+  }
+
+
+
+  async handleChatwoot(request: FastifyRequest, reply: FastifyReply) {
+    const payload = request.body as any;
+
+    if (!isOutgoingChatwootEvent(payload)) {
+      return reply.code(200).send({ ignored: true });
+    }
+
+    const data = extractOutgoingMessageData(payload);
+    if (!data) {
+      return reply.code(400).send({ error: 'Invalid chatwoot payload' });
+    }
+
+    try {
+      await whatsappProvider.sendText(data.phone, data.content);
+      logger.info({ phone: data.phone }, '[Webhook:Chatwoot] Outgoing message forwarded to UAZAPI');
+      return reply.code(200).send({ success: true });
+    } catch (error) {
+      logger.error({ error }, '[Webhook:Chatwoot] Failed to forward outgoing message');
+      return reply.code(500).send({ error: 'Failed to forward message' });
     }
   }
 

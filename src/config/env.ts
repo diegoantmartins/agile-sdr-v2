@@ -11,11 +11,13 @@ const envSchema = z.object({
   // Uazapi (WhatsApp) - optional for local dev
   UAZAPI_URL: z.string().default('http://localhost:9999'),
   UAZAPI_KEY: z.string().default('dev-placeholder'),
+  UAZAPI_WEBHOOK_SECRET: z.string().optional(),
   
   // Chatwoot (Handoff)
   CHATWOOT_URL: z.string().optional(),
   CHATWOOT_API_TOKEN: z.string().optional(),
   CHATWOOT_ACCOUNT_ID: z.string().optional(),
+  CHATWOOT_WEBHOOK_SECRET: z.string().optional(),
   
   // Intelligence
   OPENAI_API_KEY: z.string().optional(),

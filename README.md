@@ -103,6 +103,7 @@ curl http://localhost:3000/health
 - **[OPERATIONAL_SUMMARY.md](OPERATIONAL_SUMMARY.md)** - Sumário operacional
 - **[API_EXAMPLES.md](API_EXAMPLES.md)** - Exemplos de requisições
 - **[test-suite.sh](test-suite.sh)** - Script de testes
+- **[docs/chatwoot-uazapi-integration.md](docs/chatwoot-uazapi-integration.md)** - Guia de integração Chatwoot + UAZAPI (sem n8n)
 
 ---
 
