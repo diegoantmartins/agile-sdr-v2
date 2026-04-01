@@ -5,6 +5,7 @@ import { logger } from './shared/logger';
 import { webhookHandler } from './modules/messaging/webhook.handler';
 import { reactivationJob } from './modules/jobs/reactivation.job';
 import { prisma } from './shared/db';
+import { isWebhookAuthorized } from './application/webhooks/webhook-auth';
 
 const app = Fastify({
   logger: false // We use our custom pino logger
@@ -15,7 +16,27 @@ app.register(fastifyCors, { origin: true });
 // ======================== WEBHOOKS ========================
 
 app.post('/webhooks/uazapi', async (request, reply) => {
+  const authorized = isWebhookAuthorized(request.headers, {
+    expectedSecret: env.UAZAPI_WEBHOOK_SECRET
+  });
+
+  if (!authorized) {
+    return reply.status(401).send({ error: 'Unauthorized webhook' });
+  }
+
   await (webhookHandler as any).handleUazapi(request, reply);
+});
+
+app.post('/webhooks/chatwoot/message-created', async (request, reply) => {
+  const authorized = isWebhookAuthorized(request.headers, {
+    expectedSecret: env.CHATWOOT_WEBHOOK_SECRET
+  });
+
+  if (!authorized) {
+    return reply.status(401).send({ error: 'Unauthorized webhook' });
+  }
+
+  await (webhookHandler as any).handleChatwoot(request, reply);
 });
 
 // ======================== API - DASHBOARD ========================
