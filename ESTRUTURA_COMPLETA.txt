@@ -242,7 +242,7 @@ COMO INICIAR:
    npm run dev
 
 5. Testar:
-   curl http://localhost:3000/health
+   curl http://localhost:3030/health
 
 ═══════════════════════════════════════════════════════════════════════════════
 
@@ -267,7 +267,7 @@ UAZAPI (WhatsApp):
   UAZAPI_URL=https://api.uazapi.com
 
 SERVER:
-  PORT=3000
+  PORT=3030
   NODE_ENV=development
   LOG_LEVEL=info
 

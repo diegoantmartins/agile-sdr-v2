@@ -27,7 +27,7 @@ nano .env
 npm run dev
 ```
 
-Server rodará em: **http://localhost:3000**
+Server rodará em: **http://localhost:3030**
 
 ---
 
@@ -108,7 +108,7 @@ Com o painel em `GET /admin/agent-config`, você pode publicar em um subdomínio
 
 ```nginx
 upstream sdr_agent_backend {
-  server 127.0.0.1:3000;
+  server 127.0.0.1:3030;
   keepalive 32;
 }
 
@@ -142,7 +142,7 @@ services:
       - "traefik.http.routers.agent-config.rule=Host(`sdr-synapasea.sentiia.com.br`)"
       - "traefik.http.routers.agent-config.entrypoints=websecure"
       - "traefik.http.routers.agent-config.tls=true"
-      - "traefik.http.services.agent-config.loadbalancer.server.port=3000"
+      - "traefik.http.services.agent-config.loadbalancer.server.port=3030"
 ```
 
 ### Exemplo de chamada da API com token
@@ -222,7 +222,7 @@ UAZAPI_KEY=key...
 SLACK_WEBHOOK_URL=https://hooks.slack.com/...
 
 # Server
-PORT=3000
+PORT=3030
 NODE_ENV=production
 LOG_LEVEL=warn
 
@@ -246,7 +246,7 @@ module.exports = {
       exec_mode: 'cluster',
       env: {
         NODE_ENV: 'production',
-        PORT: 3000
+        PORT: 3030
       },
       error_file: 'logs/pm2-error.log',
       out_file: 'logs/pm2-out.log',
@@ -270,7 +270,7 @@ pm2 startup
 
 ```nginx
 upstream agent {
-  server localhost:3000;
+  server localhost:3030;
   keepalive 64;
 }
 
@@ -304,7 +304,7 @@ server {
 ### Health Check
 
 ```bash
-curl http://localhost:3000/health
+curl http://localhost:3030/health
 ```
 
 Resposta:
@@ -367,11 +367,11 @@ echo $MONGODB_URL
 - Verificar se a chave tem limite de chamadas
 - Verificar modelo: `OPENAI_MODEL=gpt-5-nano`
 
-### Erro: "Port 3000 already in use"
+### Erro: "Port 3030 already in use"
 
 ```bash
 # Liberar porta
-lsof -i :3000
+lsof -i :3030
 kill -9 <PID>
 
 # Ou usar porta diferente

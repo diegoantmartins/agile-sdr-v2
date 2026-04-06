@@ -97,23 +97,38 @@ model Opportunity {
 
 model Message {
   id               String   @id @default(uuid())
-  
-  opportunityId    String
-  opportunity      Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
-  
-  direction        String   // "incoming" | "outgoing"
+
+  opportunityId    String?
+  opportunity      Opportunity? @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+
+  // ActiveLead relation (used by SDR pipeline)
+  leadId           String?
+  lead             ActiveLead? @relation("LeadMessages", fields: [leadId], references: [id], onDelete: Cascade)
+  tenantId         String?
+
+  direction        String?  // "incoming" | "outgoing"
+  type             String?  // "incoming" | "outgoing" (alias used by newer code)
   channel          String   @default("whatsapp")
   content          String   @db.Text
-  
+
   sentAt           DateTime? @default(now())
   deliveryStatus   String?   // "sent", "delivered", "read", "failed"
   intentDetected   String?
-  
+  isAiGenerated    Boolean   @default(false)
+
+  // Sync fields (SDR runner)
+  syncStatus       SyncStatus?
+  syncError        String?
+
+  // Chatwoot integration
+  chatwootMessageId String?  @unique
+
   rawPayload       Json?
 
   createdAt        DateTime @default(now())
 
   @@index([opportunityId])
+  @@index([leadId])
   @@index([createdAt])
 }
 
@@ -138,6 +153,8 @@ model JobLog {
   jobType           String
   status            String
   processedCount    Int       @default(0)
+  leadsProcessed    Int       @default(0)
+  leadsSkipped      Int       @default(0)
   error             String?   @db.Text
   startedAt         DateTime  @default(now())
   completedAt       DateTime?
@@ -161,4 +178,114 @@ enum JobStatus {
   SUCCESS
   FAILED
   PARTIAL
+}
+
+enum LeadStatus {
+  TRIAGE
+  FOLLOW_UP
+  HOT
+  ARCHIVED
+}
+
+enum IntentType {
+  BUY_NOW
+  SUPPORT
+  TRIAGE
+}
+
+enum SyncStatus {
+  PENDING
+  SYNCED
+  FAILED
+}
+
+// =============== ACTIVE LEAD PIPELINE ===============
+
+model ActiveLead {
+  id                String      @id @default(uuid())
+  tenantId          String
+  phone             String
+  name              String
+  email             String?
+  company           String?
+  source            String      @default("whatsapp")
+  campaignId        String?
+  metadata          Json?
+  score             Int         @default(0)
+  status            LeadStatus  @default(TRIAGE)
+  intentClassified  IntentType?
+  conversionStage   String?
+  messageCount      Int         @default(0)
+  lastMessageAt     DateTime?
+
+  chatwootContactId String?
+  chatwootConvId    String?
+
+  messages          Message[]   @relation("LeadMessages")
+  notes             Note[]
+
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  @@unique([tenantId, phone], name: "tenant_phone_unique")
+  @@index([tenantId])
+  @@index([status])
+  @@index([score])
+}
+
+model ColdLead {
+  id               String   @id @default(uuid())
+  tenantId         String
+  originalLeadId   String
+  phone            String
+  name             String
+  email            String?
+  company          String?
+  lastScore        Int
+  lastStatus       LeadStatus
+  freezeReason     String
+  conversationData Json?
+
+  createdAt        DateTime @default(now())
+
+  @@index([tenantId])
+}
+
+model GovernanceAudit {
+  id        String   @id @default(uuid())
+  tenantId  String
+  action    String
+  actor     String
+  success   Boolean
+  metadata  Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([tenantId])
+  @@index([action])
+}
+
+model Note {
+  id       String   @id @default(uuid())
+  leadId   String
+  lead     ActiveLead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  content  String   @db.Text
+  type     String   @default("general")
+
+  createdAt DateTime @default(now())
+
+  @@index([leadId])
+}
+
+model ConversationMetric {
+  id               String   @id @default(uuid())
+  leadId           String
+  messageCount     Int      @default(0)
+  userMessageCount Int      @default(0)
+  aiMessageCount   Int      @default(0)
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([leadId])
 }

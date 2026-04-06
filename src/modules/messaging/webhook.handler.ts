@@ -54,7 +54,7 @@ export class WebhookHandler {
             direction: 'incoming',
             content: message,
             intentDetected: intent,
-            rawPayload: request.body
+            rawPayload: request.body as any
           }
         })
       ]);

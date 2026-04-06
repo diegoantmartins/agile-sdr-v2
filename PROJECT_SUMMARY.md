@@ -154,7 +154,7 @@ nano .env
 # Iniciar desenvolvimento
 npm run dev
 
-# Servidor em: http://localhost:3000
+# Servidor em: http://localhost:3030
 ```
 
 ### Docker
@@ -188,7 +188,7 @@ UAZAPI_URL=https://api.uazapi.com
 
 NODE_ENV=development
 LOG_LEVEL=info
-PORT=3000
+PORT=3030
 ```
 
 ## 📈 Status do Projeto

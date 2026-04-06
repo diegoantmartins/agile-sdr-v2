@@ -59,7 +59,7 @@
 
 ### 1. Criar Lead
 ```bash
-curl -X POST http://localhost:3000/api/leads \
+curl -X POST http://localhost:3030/api/leads \
   -H "Content-Type: application/json" \
   -d '{
     "phone": "5511999999999",
@@ -88,21 +88,21 @@ curl -X POST http://localhost:3000/api/leads \
 
 ### 2. Listar Leads
 ```bash
-curl http://localhost:3000/api/leads
+curl http://localhost:3030/api/leads
 ```
 
 **Resultado**: Retorna array de leads com scoring e intenções
 
 ### 3. Health Check
 ```bash
-curl http://localhost:3000/health
+curl http://localhost:3030/health
 ```
 
 **Resultado**: `{"status": "ok", "timestamp": "..."}`
 
 ### 4. Testar Todos Serviços
 ```bash
-curl http://localhost:3000/test/all
+curl http://localhost:3030/test/all
 ```
 
 **Resultado**:
@@ -137,7 +137,7 @@ UAZAPI_KEY="test-key-please-update"                # ← SUBSTITUIR
 UAZAPI_URL="https://api.uazapi.com"
 
 # ✅ CONFIGURAÇÃO
-PORT=3000
+PORT=3030
 NODE_ENV="development"
 LOG_LEVEL="debug"
 FOLLOW_UP_DELAY_HOURS=24
@@ -168,7 +168,7 @@ OPENAI_MODEL="gpt-3.5-turbo"  # Mais econômico que gpt-4o-mini
 ### Após Configurar OpenAI
 ```bash
 # Teste a classificação
-curl -X POST http://localhost:3000/test/send-message \
+curl -X POST http://localhost:3030/test/send-message \
   -H "Content-Type: application/json" \
   -d '{
     "phone": "5511999999999",
@@ -206,7 +206,7 @@ curl -X POST http://localhost:3000/test/send-message \
 
 ## 🎯 CHECKLIST FINAL
 
-- [x] Servidor Fastify rodando (porta 3000)
+- [x] Servidor Fastify rodando (porta 3030)
 - [x] PostgreSQL conectado (porta 5433)
 - [x] MongoDB/Agenda iniciado (porta 27018)
 - [x] Redis operacional (porta 6379)

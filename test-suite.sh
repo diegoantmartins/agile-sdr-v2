@@ -3,7 +3,7 @@
 # SDR Agent Core - Test Suite
 # Uso: bash test-suite.sh
 
-API="http://localhost:3000"
+API="http://localhost:3030"
 GREEN='\033[0;32m'
 RED='\033[0;31m'
 YELLOW='\033[1;33m'
@@ -70,7 +70,7 @@ echo ""
 echo -e "${GREEN}✅ Test suite completed!${NC}"
 echo ""
 echo -e "${YELLOW}📋 Status Overview:${NC}"
-echo "  ✅ Server: http://localhost:3000"
+echo "  ✅ Server: http://localhost:3030"
 echo "  ✅ Database: PostgreSQL (port 5433)"
 echo "  ✅ Jobs: MongoDB + Agenda (port 27018)"
 echo "  ✅ Cache: Redis (port 6379)"

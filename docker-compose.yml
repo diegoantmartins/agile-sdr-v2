@@ -1,75 +1,87 @@
-# docker-compose.yml - Agile SDR Agent
-
 services:
   # ========== PostgreSQL ==========
   postgres:
     image: postgres:16-alpine
-    container_name: agent-postgres
+    container_name: agile-sdr-postgres
     environment:
       POSTGRES_USER: agile
-      POSTGRES_PASSWORD: agile123
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: agile_agent
-    ports:
-      - "5433:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - ./docker_data/postgres:/var/lib/postgresql/data
+    ports:
+      - '127.0.0.1:5441:5432'
+    expose:
+      - 5441
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U agile"]
       interval: 10s
       timeout: 5s
       retries: 5
     networks:
-      - agent-network
+      - shared-net
+    restart: unless-stopped
 
-  # ========== MongoDB (para Agenda) ==========
+  # ========== MongoDB ==========
   mongodb:
     image: mongo:6.0
-    container_name: agent-mongodb
+    container_name: agile-sdr-mongodb
     environment:
       MONGO_INITDB_ROOT_USERNAME: agile
-      MONGO_INITDB_ROOT_PASSWORD: agile123
-    ports:
-      - "27018:27017"
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
     volumes:
-      - mongodb_data:/data/db
+      - ./docker_data/mongodb:/data/db
+    ports:
+      - '127.0.0.1:27018:27017'
+    expose:
+      - 27018
     healthcheck:
       test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
       interval: 10s
       timeout: 5s
       retries: 5
     networks:
-      - agent-network
+      - shared-net
+    restart: unless-stopped
 
-  # ========== Redis (para Cache/Queue) ==========
+  # ========== Redis ==========
   redis:
-    image: redis:7-alpine
-    container_name: agent-redis
-    ports:
-      - "6380:6379"
+    image: redis:alpine
+    container_name: agile-sdr-redis
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    command: >
+      redis-server --requirepass "${REDIS_PASSWORD}" --port 6386 --appendonly yes
     volumes:
-      - redis_data:/data
+      - ./docker_data/redis:/data
+    ports:
+      - '127.0.0.1:6386:6386'
+    expose:
+      - 6386
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "redis-cli", "-p", "6386", "-a", "${REDIS_PASSWORD}", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
     networks:
-      - agent-network
+      - shared-net
+    restart: unless-stopped
+    env_file: .env
 
-  # ========== Agent App (apenas config, não start automático) ==========
+  # ========== SDR Agent App ==========
   app:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: sdr-agent
+    container_name: agile-sdr-agent
     environment:
       NODE_ENV: production
-      DATABASE_URL: postgresql://agile:agile123@postgres:5432/agile_agent
-      MONGODB_URL: mongodb://agile:agile123@mongodb:27017/agile-agenda?authSource=admin
-      REDIS_URL: redis://redis:6379
-      PORT: 3000
+      DATABASE_URL: postgresql://agile:${POSTGRES_PASSWORD}@agile-sdr-postgres:5432/agile_agent
+      MONGODB_URL: mongodb://agile:${MONGO_PASSWORD}@agile-sdr-mongodb:27017/agile-agenda?authSource=admin
+      REDIS_URL: redis://:${REDIS_PASSWORD}@agile-sdr-redis:6386
+      PORT: 3030
     ports:
-      - "3000:3000"
+      - "0.0.0.0:3030:3030"
     depends_on:
       postgres:
         condition: service_healthy
@@ -78,15 +90,10 @@ services:
       redis:
         condition: service_healthy
     networks:
-      - agent-network
-    profiles:
-      - manual
-
-volumes:
-  postgres_data:
-  mongodb_data:
-  redis_data:
+      - shared-net
+    restart: unless-stopped
+    env_file: .env
 
 networks:
-  agent-network:
-    driver: bridge
+  shared-net:
+    external: true

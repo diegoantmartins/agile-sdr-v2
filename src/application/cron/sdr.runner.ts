@@ -40,6 +40,11 @@ export class SdrRunner {
 
       for (const msg of pending) {
         try {
+          if (!msg.lead) {
+            logger.warn(`[SdrRunner] Mensagem ${msg.id} sem lead associado, pulando.`);
+            continue;
+          }
+
           await uazapi.sendMessage({
             phone: msg.lead.phone,
             message: msg.content

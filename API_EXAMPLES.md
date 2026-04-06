@@ -1,6 +1,6 @@
 # 📝 EXEMPLOS DE REQUISIÇÕES - SDR API
 
-**Base URL**: `http://localhost:3000`
+**Base URL**: `http://localhost:3030`
 
 ---
 
@@ -8,7 +8,7 @@
 
 ### Request
 ```bash
-curl http://localhost:3000/health
+curl http://localhost:3030/health
 ```
 
 ### Response (200 OK)
@@ -25,7 +25,7 @@ curl http://localhost:3000/health
 
 ### Request
 ```bash
-curl -X POST http://localhost:3000/api/leads \
+curl -X POST http://localhost:3030/api/leads \
   -H "Content-Type: application/json" \
   -d '{
     "phone": "5511999999999",
@@ -77,7 +77,7 @@ curl -X POST http://localhost:3000/api/leads \
 
 ### Request
 ```bash
-curl http://localhost:3000/api/leads
+curl http://localhost:3030/api/leads
 ```
 
 ### Response (200 OK)
@@ -107,7 +107,7 @@ curl http://localhost:3000/api/leads
 
 ### Request
 ```bash
-curl http://localhost:3000/api/leads/5511999999999
+curl http://localhost:3030/api/leads/5511999999999
 ```
 
 ### Response (200 OK)
@@ -138,7 +138,7 @@ curl http://localhost:3000/api/leads/5511999999999
 
 ### Request
 ```bash
-curl http://localhost:3000/api/leads/hot
+curl http://localhost:3030/api/leads/hot
 ```
 
 ### Response (200 OK)
@@ -165,7 +165,7 @@ curl http://localhost:3000/api/leads/hot
 ### Cenário: Cliente envia mensagem via WhatsApp
 
 ```bash
-curl -X POST http://localhost:3000/webhooks/uazapi/message \
+curl -X POST http://localhost:3030/webhooks/uazapi/message \
   -H "Content-Type: application/json" \
   -d '{
     "phone": "5511999999999",
@@ -197,7 +197,7 @@ curl -X POST http://localhost:3000/webhooks/uazapi/message \
 
 ### Request
 ```bash
-curl -X POST http://localhost:3000/test/send-message \
+curl -X POST http://localhost:3030/test/send-message \
   -H "Content-Type: application/json" \
   -d '{
     "phone": "5511999999999",
@@ -230,7 +230,7 @@ curl -X POST http://localhost:3000/test/send-message \
 
 ### Request
 ```bash
-curl http://localhost:3000/test/uazapi
+curl http://localhost:3030/test/uazapi
 ```
 
 ### Response (200 OK)
@@ -255,7 +255,7 @@ curl http://localhost:3000/test/uazapi
 
 ### Request
 ```bash
-curl http://localhost:3000/test/database
+curl http://localhost:3030/test/database
 ```
 
 ### Response (200 OK)
@@ -278,7 +278,7 @@ curl http://localhost:3000/test/database
 
 ### Request
 ```bash
-curl http://localhost:3000/test/chatwoot
+curl http://localhost:3030/test/chatwoot
 ```
 
 ### Response (200 OK) - Com token válido
@@ -306,7 +306,7 @@ curl http://localhost:3000/test/chatwoot
 
 ### Request
 ```bash
-curl http://localhost:3000/test/all
+curl http://localhost:3030/test/all
 ```
 
 ### Response (200 OK)
@@ -394,7 +394,7 @@ Authorization: Bearer <token>            (futuro, se ativar autenticação)
 
 ```bash
 # 1. Criar lead
-LEAD=$(curl -s -X POST http://localhost:3000/api/leads \
+LEAD=$(curl -s -X POST http://localhost:3030/api/leads \
   -H "Content-Type: application/json" \
   -d '{
     "phone": "5511988776655",
@@ -403,7 +403,7 @@ LEAD=$(curl -s -X POST http://localhost:3000/api/leads \
   }')
 
 # 2. Simular webhook de mensagem
-curl -X POST http://localhost:3000/webhooks/uazapi/message \
+curl -X POST http://localhost:3030/webhooks/uazapi/message \
   -H "Content-Type: application/json" \
   -d '{
     "phone": "5511988776655",
@@ -414,10 +414,10 @@ curl -X POST http://localhost:3000/webhooks/uazapi/message \
   }'
 
 # 3. Consultar lead atualizado
-curl http://localhost:3000/api/leads/5511988776655
+curl http://localhost:3030/api/leads/5511988776655
 
 # 4. Listar hot leads
-curl http://localhost:3000/api/leads/hot
+curl http://localhost:3030/api/leads/hot
 ```
 
 ---

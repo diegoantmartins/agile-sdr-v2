@@ -73,7 +73,7 @@ npm start
 
 ### 4. **Verificar Saúde**
 ```bash
-curl http://localhost:3000/health
+curl http://localhost:3030/health
 ```
 
 ---
@@ -83,7 +83,7 @@ curl http://localhost:3000/health
 ### Serviços Operacionais ✅
 | Serviço | Status | Port |
 |---------|--------|------|
-| Fastify Server | ✅ Rodando | 3000 |
+| Fastify Server | ✅ Rodando | 3030 |
 | PostgreSQL | ✅ Conectado | 5433 |
 | MongoDB (Agenda) | ✅ Conectado | 27018 |
 | Redis Cache | ✅ Conectado | 6379 |
@@ -156,7 +156,7 @@ GET    /test/chatwoot         # Testar Chatwoot
 
 ### 1. Criar Lead
 ```bash
-curl -X POST http://localhost:3000/api/leads \
+curl -X POST http://localhost:3030/api/leads \
   -H "x-tenant-id: tenant-demo" \
   -H "Content-Type: application/json" \
   -d '{
@@ -169,7 +169,7 @@ curl -X POST http://localhost:3000/api/leads \
 
 ### 2. Webhook (Receber Mensagem)
 ```bash
-curl -X POST http://localhost:3000/webhooks/uazapi/message \
+curl -X POST http://localhost:3030/webhooks/uazapi/message \
   -H "x-tenant-id: tenant-demo" \
   -H "Content-Type: application/json" \
   -d '{
@@ -183,7 +183,7 @@ curl -X POST http://localhost:3000/webhooks/uazapi/message \
 
 ### 3. Listar Leads
 ```bash
-curl http://localhost:3000/api/leads
+curl http://localhost:3030/api/leads
 ```
 
 ---
@@ -240,7 +240,7 @@ RD_STATION_TOKEN=...
 
 main
 # Server
-PORT=3000
+PORT=3030
 NODE_ENV=development
 LOG_LEVEL=debug
 FOLLOW_UP_DELAY_HOURS=24
@@ -340,7 +340,7 @@ bash test-suite.sh
 
 | Problema | Solução |
 |----------|---------|
-| Porta 3000 em uso | `pkill -f "node dist"` |
+| Porta 3030 em uso | `pkill -f "node dist"` |
 | BD não conecta | `docker-compose restart` |
 | OpenAI não funciona | Verificar chave em https://platform.openai.com |
 | Chatwoot erro 401 | Gerar novo token no painel |
@@ -435,7 +435,7 @@ UAZAPI_KEY=key...
 UAZAPI_URL=https://api.uazapi.com
 
 # Server
-PORT=3000
+PORT=3030
 NODE_ENV=development
 LOG_LEVEL=info
 ```

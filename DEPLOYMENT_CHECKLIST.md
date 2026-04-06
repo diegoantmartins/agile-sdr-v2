@@ -24,19 +24,19 @@
 - [ ] Obter em: https://platform.openai.com/api-keys
 - [ ] Copiar chave (formato: `sk-proj-...`)
 - [ ] Adicionar em `.env` como `OPENAI_API_KEY`
-- [ ] Testar: `curl -X POST http://localhost:3000/test/send-message \-H "Content-Type: application/json" \-d '{"phone": "5511999999999", "message": "Teste OpenAI"}'`
+- [ ] Testar: `curl -X POST http://localhost:3030/test/send-message \-H "Content-Type: application/json" \-d '{"phone": "5511999999999", "message": "Teste OpenAI"}'`
 
 ### 2. UAZAPI Key ⚠️ **REQUERIDO PARA WHATSAPP**
 - [ ] Obter com suporte UAZAPI
 - [ ] Adicionar em `.env` como `UAZAPI_KEY`
-- [ ] Testar: `curl http://localhost:3000/test/uazapi`
+- [ ] Testar: `curl http://localhost:3030/test/uazapi`
 
 ### 3. Chatwoot Token ⚠️ **REQUER VALIDAÇÃO**
 - [x] URL já atualizada: `https://connect.synapsea.com.br`
 - [x] Token fornecido: `81wgoQ4AWQxrJc7sHLmD23nb`
 - [x] Account ID: `1`
 - [ ] Se erro 401 persistir: Gerar novo token no painel Chatwoot
-- [ ] Testar: `curl http://localhost:3000/test/chatwoot`
+- [ ] Testar: `curl http://localhost:3030/test/chatwoot`
 
 ---
 
@@ -66,7 +66,7 @@
 ### Fase 4: Validação Final
 - [ ] `npm run build` sem erros
 - [ ] `npm start` iniciando normalmente
-- [ ] `curl http://localhost:3000/test/all` retornando status
+- [ ] `curl http://localhost:3030/test/all` retornando status
 - [ ] Logs sem warnings críticos
 
 ---
@@ -92,7 +92,7 @@ npm run build
 npm start
 
 # 6. Verifique
-curl http://localhost:3000/health
+curl http://localhost:3030/health
 ```
 
 ### Option 2: Docker Container
@@ -101,14 +101,14 @@ FROM node:18-alpine
 WORKDIR /app
 COPY . .
 RUN npm install --legacy-peer-deps && npm run build
-EXPOSE 3000
+EXPOSE 3030
 CMD ["npm", "start"]
 ```
 
 Build e deploy:
 ```bash
 docker build -t sdr-agent:v2 .
-docker run -p 3000:3000 --env-file .env sdr-agent:v2
+docker run -p 3030:3030 --env-file .env sdr-agent:v2
 ```
 
 ### Option 3: Docker Compose (Full Stack)
@@ -141,7 +141,7 @@ docker-compose ps
 - [ ] CORS configurado corretamente
 - [ ] Helmet security headers ativo
 - [ ] Rate limiting implementado (opcional)
-- [ ] Firewall liberando portas 3000, 5433, 27018
+- [ ] Firewall liberando portas 3030, 5433, 27018
 
 ### Database
 - [ ] Backup automático configurado
@@ -156,47 +156,47 @@ docker-compose ps
 ### 1. Health Checks
 ```bash
 # Servidor
-curl http://localhost:3000/health
+curl http://localhost:3030/health
 
 # Todos serviços
-curl http://localhost:3000/test/all
+curl http://localhost:3030/test/all
 
 # Database específico
-curl http://localhost:3000/test/database
+curl http://localhost:3030/test/database
 
 # WhatsApp
-curl http://localhost:3000/test/uazapi
+curl http://localhost:3030/test/uazapi
 
 # CRM
-curl http://localhost:3000/test/chatwoot
+curl http://localhost:3030/test/chatwoot
 ```
 
 ### 2. Fluxo End-to-End
 ```bash
 # 1. Criar lead
-curl -X POST http://localhost:3000/api/leads \
+curl -X POST http://localhost:3030/api/leads \
   -H "Content-Type: application/json" \
   -d '{"phone": "5511988776655", "name": "Teste", "source": "whatsapp"}'
 
 # 2. Webhook mensagem
-curl -X POST http://localhost:3000/webhooks/uazapi/message \
+curl -X POST http://localhost:3030/webhooks/uazapi/message \
   -H "Content-Type: application/json" \
   -d '{"phone": "5511988776655", "message": "Teste", "messageId": "msg_1", "timestamp": "2026-01-27T19:30:00.000Z"}'
 
 # 3. Listar leads
-curl http://localhost:3000/api/leads
+curl http://localhost:3030/api/leads
 
 # 4. Hot leads
-curl http://localhost:3000/api/leads/hot
+curl http://localhost:3030/api/leads/hot
 ```
 
 ### 3. Performance
 ```bash
 # Medir tempo de resposta
-time curl http://localhost:3000/api/leads
+time curl http://localhost:3030/api/leads
 
 # Load testing (exemplo)
-ab -n 1000 -c 10 http://localhost:3000/health
+ab -n 1000 -c 10 http://localhost:3030/health
 ```
 
 ---
@@ -227,7 +227,7 @@ docker-compose logs mongo
 ### Health Endpoint
 ```bash
 # Monitoring script
-watch 'curl -s http://localhost:3000/health | jq'
+watch 'curl -s http://localhost:3030/health | jq'
 ```
 
 ### Database Queries
@@ -249,7 +249,7 @@ SELECT * FROM job_log ORDER BY created_at DESC LIMIT 10;
 ### Servidor não inicia
 ```bash
 # Verificar porta
-lsof -i :3000
+lsof -i :3030
 
 # Ver erro
 npm start 2>&1 | head -50
@@ -302,7 +302,7 @@ Quando escalar:
 
 1. **Load Balancer**
    - nginx/HAProxy na porta 80/443
-   - Múltiplas instâncias Node (3000, 3001, 3002)
+   - Múltiplas instâncias Node (3030, 3001, 3002)
 
 2. **Database**
    - Replicação PostgreSQL

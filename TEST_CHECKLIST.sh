@@ -12,7 +12,7 @@ RED='\033[0;31m'
 YELLOW='\033[1;33m'
 NC='\033[0m'
 
-API_URL="http://localhost:3000"
+API_URL="http://localhost:3030"
 
 echo "📋 TESTES A EXECUTAR:"
 echo ""

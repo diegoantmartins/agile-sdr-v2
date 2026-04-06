@@ -25,7 +25,7 @@
   docker-compose up -d
   npm run dev
 
-  # Servidor rodará em: http://localhost:3000
+  # Servidor rodará em: http://localhost:3030
 
 📋 ARQUIVOS PRINCIPAIS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -168,7 +168,7 @@ SLACK (Notificações - opcional)
   SLACK_BOT_TOKEN=xoxb-...
 
 SERVER
-  PORT=3000
+  PORT=3030
   NODE_ENV=development
   LOG_LEVEL=info
 
@@ -184,7 +184,7 @@ CONTAINERS INCLUSOS
   ✅ postgres:16        - PostgreSQL (porta 5432)
   ✅ mongodb:7          - MongoDB (porta 27017)
   ✅ redis:7            - Redis (porta 6379)
-  ✅ app                - Node.js App (porta 3000)
+  ✅ app                - Node.js App (porta 3030)
 
 INICIAR
   docker-compose up -d
@@ -248,7 +248,7 @@ LOGS
   1. Editar .env com suas credenciais (OpenAI, Chatwoot, UAZAPI)
   2. Executar: bash QUICK_START.sh
   3. Escolher opção 1 para setup completo
-  4. Testar: curl http://localhost:3000/health
+  4. Testar: curl http://localhost:3030/health
   5. Ver logs: docker-compose logs -f app
   6. Chamar webhooks para testar
   7. Deploy em produção (ver DEPLOYMENT_GUIDE.md)

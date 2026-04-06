@@ -1,41 +1,37 @@
-# Dockerfile
-
 FROM node:20-alpine AS builder
 
+RUN apk add --no-cache openssl
+
 WORKDIR /app
 
-# Copy package files
 COPY package*.json ./
 COPY tsconfig.json ./
-
-# Install dependencies
 RUN npm ci
 
-# Copy source code
-COPY src ./src
 COPY prisma ./prisma
+# Generate Prisma client BEFORE copying src or building
+RUN npx prisma generate
 
-# Build TypeScript
+COPY src ./src
 RUN npm run build
 
-# Production image
 FROM node:20-alpine
+
+RUN apk add --no-cache openssl
 
 WORKDIR /app
 
-# Install only production dependencies
 COPY package*.json ./
 RUN npm ci --only=production
 
-# Copy built application
-COPY --from=builder /app/dist ./dist
+# Must also generate in production image — the generated client goes in node_modules
 COPY prisma ./prisma
+RUN npx prisma generate
 
-# Create logs directory
+COPY --from=builder /app/dist ./dist
+
 RUN mkdir -p logs
 
-# Expose port
-EXPOSE 3000
+EXPOSE 3030
 
-# Start application
 CMD ["node", "dist/src/server.js"]

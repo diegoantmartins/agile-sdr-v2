@@ -16,7 +16,7 @@ export class AgentOrchestrator {
   private agentConfigStore: AgentConfigStore;
 
   constructor() {
-    this.intentClassifier = new IntentClassifier(config.OPENAI_API_KEY, config.OPENAI_MODEL);
+    this.intentClassifier = new IntentClassifier(config.OPENAI_API_KEY || '', config.OPENAI_MODEL);
 
     this.agentConfigStore = new AgentConfigStore(config.AGENT_CONFIG_PATH, {
       autoReplyEnabled: true,
@@ -122,7 +122,7 @@ export class AgentOrchestrator {
 
       // Instanciar ResponseGenerator com config fresca
       this.responseGenerator = new ResponseGenerator(
-        config.OPENAI_API_KEY,
+        config.OPENAI_API_KEY || '',
         config.OPENAI_MODEL,
         agentConfig
       );

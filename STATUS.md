@@ -9,7 +9,7 @@
 
 | Serviço | Status | Detalhe |
 |---------|--------|---------|
-| **Servidor Fastify** | ✅ Rodando | Port 3000 |
+| **Servidor Fastify** | ✅ Rodando | Port 3030 |
 | **PostgreSQL** | ✅ Conectado | Port 5433 |
 | **MongoDB (Agenda)** | ✅ Conectado | Port 27018 |
 | **Redis Cache** | ✅ Conectado | Port 6379 |
@@ -65,7 +65,7 @@ OPENAI_MODEL="gpt-4o-mini"
 npm start
 
 # Testar classificação:
-curl -X POST http://localhost:3000/test/send-message \
+curl -X POST http://localhost:3030/test/send-message \
   -H "Content-Type: application/json" \
   -d '{
     "from": "5511999999999",
@@ -134,7 +134,7 @@ npm start
 ### 5️⃣ Testar Fluxo Completo
 ```bash
 # 1. Criar um lead
-curl -X POST http://localhost:3000/api/leads \
+curl -X POST http://localhost:3030/api/leads \
   -H "Content-Type: application/json" \
   -d '{
     "phone": "5511999999999",
@@ -144,7 +144,7 @@ curl -X POST http://localhost:3000/api/leads \
   }'
 
 # 2. Enviar mensagem (será classificada)
-curl -X POST http://localhost:3000/test/send-message \
+curl -X POST http://localhost:3030/test/send-message \
   -H "Content-Type: application/json" \
   -d '{
     "from": "5511999999999",
@@ -152,7 +152,7 @@ curl -X POST http://localhost:3000/test/send-message \
   }'
 
 # 3. Listar leads
-curl http://localhost:3000/api/leads
+curl http://localhost:3030/api/leads
 ```
 
 ---

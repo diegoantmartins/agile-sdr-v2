@@ -60,7 +60,7 @@ pkill -f "node dist/src/server.js"
 npm start
 
 # Teste a IA
-curl -X POST http://localhost:3000/test/send-message \
+curl -X POST http://localhost:3030/test/send-message \
   -H "Content-Type: application/json" \
   -d '{
     "phone": "5511999999999",
@@ -122,7 +122,7 @@ pkill -f "node dist/src/server.js"
 npm start
 
 # Teste conexão
-curl http://localhost:3000/test/uazapi
+curl http://localhost:3030/test/uazapi
 
 # Resposta esperada:
 # {"status": "connected", "message": "UAZAPI está funcionando"}
@@ -182,7 +182,7 @@ pkill -f "node dist/src/server.js"
 npm start
 
 # Verificar
-curl http://localhost:3000/test/chatwoot
+curl http://localhost:3030/test/chatwoot
 
 # Resposta esperada:
 # {"status": "connected", "accountId": 1, "accountName": "Synapsea"}
@@ -216,7 +216,7 @@ npm start
 sleep 5
 
 # 5. Teste todos serviços
-curl http://localhost:3000/test/all | jq .
+curl http://localhost:3030/test/all | jq .
 
 # Esperado:
 # {
@@ -233,7 +233,7 @@ curl http://localhost:3000/test/all | jq .
 ### Teste 1: Criar Lead e Enviar Mensagem
 ```bash
 # 1. Criar lead
-curl -X POST http://localhost:3000/api/leads \
+curl -X POST http://localhost:3030/api/leads \
   -H "Content-Type: application/json" \
   -d '{
     "phone": "5511999999999",
@@ -242,7 +242,7 @@ curl -X POST http://localhost:3000/api/leads \
   }'
 
 # 2. Webhook de mensagem
-curl -X POST http://localhost:3000/webhooks/uazapi/message \
+curl -X POST http://localhost:3030/webhooks/uazapi/message \
   -H "Content-Type: application/json" \
   -d '{
     "phone": "5511999999999",
@@ -253,7 +253,7 @@ curl -X POST http://localhost:3000/webhooks/uazapi/message \
   }'
 
 # 3. Verificar se foi classificado e pontuado
-curl http://localhost:3000/api/leads/5511999999999 | jq '.lead | {score, intentClassified, status}'
+curl http://localhost:3030/api/leads/5511999999999 | jq '.lead | {score, intentClassified, status}'
 ```
 
 ### Teste 2: Verificar Logs
@@ -268,7 +268,7 @@ grep -i "error\|fail" /tmp/agent.log | tail -10
 ### Teste 3: Validar Jobs Automáticos
 ```bash
 # Ver se jobs estão rodando
-curl http://localhost:3000/health
+curl http://localhost:3030/health
 
 # Logs do Agenda
 grep "Agenda\|Job" /tmp/agent.log | tail -10
@@ -342,7 +342,7 @@ Solução:
 **Se algo não funcionar:**
 
 1. Ver logs: `tail -f /tmp/agent.log`
-2. Testar endpoint: `curl http://localhost:3000/test/all`
+2. Testar endpoint: `curl http://localhost:3030/test/all`
 3. Verificar .env: `cat .env | grep OPENAI`
 4. Documentação: Ver README.md e STATUS.md
 

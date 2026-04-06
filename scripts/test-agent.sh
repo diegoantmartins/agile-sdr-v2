@@ -5,7 +5,7 @@
 # Execute depois de: docker-compose up -d && npm run dev
 # ================================================================
 
-BASE_URL="http://localhost:3000"
+BASE_URL="http://localhost:3030"
 TENANT="agile-default"
 PHONE="5511987654321"
 

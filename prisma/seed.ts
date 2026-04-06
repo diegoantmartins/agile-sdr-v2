@@ -265,9 +265,9 @@ async function main() {
 
   console.log('\n🎉 Seed concluído com sucesso!');
   console.log('\n📋 Próximos passos:');
-  console.log('   1. npm run dev           → Inicia o backend na porta 3000');
+  console.log('   1. npm run dev           → Inicia o backend na porta 3030');
   console.log('   2. cd console-web && npm run dev → Frontend na porta 9000');
-  console.log('   3. http://localhost:3000/health');
+  console.log('   3. http://localhost:3030/health');
   console.log('   4. http://localhost:9000');
 }
 
