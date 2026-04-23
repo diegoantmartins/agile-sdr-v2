@@ -64,7 +64,7 @@ export class UAZAPIClient {
     try {
       logger.debug('[UAZAPI] Enviando mensagem', { phone: payload.phone });
 
-      const response = await this.client.post('/send-message', {
+      const response = await this.client.post('/message/text', {
         phone: this.normalizePhone(payload.phone),
         message: payload.message
       });

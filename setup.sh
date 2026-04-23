@@ -39,7 +39,7 @@ docker-compose up -d
 # ============ 6. Aguardar banco de dados ==========
 echo "⏳ Aguardando PostgreSQL..."
 for i in {1..30}; do
-  if docker-compose exec -T postgres pg_isready -U agent > /dev/null 2>&1; then
+  if docker-compose exec -T postgres pg_isready -U agile > /dev/null 2>&1; then
     echo "✅ PostgreSQL pronto"
     break
   fi
