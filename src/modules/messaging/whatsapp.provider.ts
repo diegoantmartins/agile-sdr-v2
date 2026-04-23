@@ -15,7 +15,7 @@ export class UazapiProvider implements WhatsAppProvider {
       timeout: 15000,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${env.UAZAPI_KEY}`
+        'token': env.UAZAPI_KEY
       }
     });
   }
@@ -26,16 +26,16 @@ export class UazapiProvider implements WhatsAppProvider {
     try {
       logger.info({ phone: normalizedPhone }, '[WhatsApp] Sending message');
       
-      const response = await this.client.post('/send-message', {
-        phone: normalizedPhone,
-        message: content
+      const response = await this.client.post('/send/text', {
+        number: normalizedPhone,
+        text: content
       });
 
       if (response.status !== 200 && response.status !== 201) {
         throw new Error(`Uazapi responded with status ${response.status}`);
       }
 
-      logger.info({ phone: normalizedPhone, messageId: response.data?.messageId }, '[WhatsApp] Message sent');
+      logger.info({ phone: normalizedPhone, messageId: response.data?.messageid }, '[WhatsApp] Message sent');
     } catch (error) {
       logger.error({ error, phone: normalizedPhone }, '[WhatsApp] Failed to send message');
       throw error;

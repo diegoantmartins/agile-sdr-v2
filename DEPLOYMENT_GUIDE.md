@@ -84,13 +84,13 @@ npm start
 
 Com o painel em `GET /admin/agent-config`, você pode publicar em um subdomínio dedicado como:
 
-- `sdr-synapasea.sentiia.com.br` → rota de UI
-- `sdr-synapasea.sentiia.com.br/api/admin/agent-config` → API de configuração
+- `sdrconfig.sentiia.com.br` → rota de UI
+- `sdrconfig.sentiia.com.br/api/admin/agent-config` → API de configuração
 
 > Recomendado em produção: definir `ADMIN_CONFIG_TOKEN` e restringir acesso por IP/VPN no proxy.
 
 
-### Passos recomendados para publicar `sdr-synapasea.sentiia.com.br`
+### Passos recomendados para publicar `sdrconfig.sentiia.com.br`
 
 1. Criar registro DNS `A/CNAME` do subdomínio apontando para o servidor do proxy.
 2. Garantir TLS (Let's Encrypt/Cloudflare) no subdomínio.
@@ -114,7 +114,7 @@ upstream sdr_agent_backend {
 
 server {
   listen 80;
-  server_name sdr-synapasea.sentiia.com.br;
+  server_name sdrconfig.sentiia.com.br;
 
   # Opcional: limite de origem/IP aqui
   # allow 10.0.0.0/8;
@@ -139,7 +139,7 @@ services:
     image: sdr-agent:latest
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.agent-config.rule=Host(`sdr-synapasea.sentiia.com.br`)"
+      - "traefik.http.routers.agent-config.rule=Host(`sdrconfig.sentiia.com.br`)"
       - "traefik.http.routers.agent-config.entrypoints=websecure"
       - "traefik.http.routers.agent-config.tls=true"
       - "traefik.http.services.agent-config.loadbalancer.server.port=3030"
@@ -148,7 +148,7 @@ services:
 ### Exemplo de chamada da API com token
 
 ```bash
-curl -X PUT https://sdr-synapasea.sentiia.com.br/api/admin/agent-config   -H "Content-Type: application/json"   -H "x-admin-token: SEU_TOKEN"   -d '{
+curl -X PUT https://sdrconfig.sentiia.com.br/api/admin/agent-config   -H "Content-Type: application/json"   -H "x-admin-token: SEU_TOKEN"   -d '{
     "autoReplyEnabled": true,
     "companyName": "Minha Empresa",
     "objective": "Qualificar e converter leads para reunião",

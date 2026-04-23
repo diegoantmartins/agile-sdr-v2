@@ -1,93 +1,68 @@
-// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-generator client {
-  provider = "prisma-client-js"
-}
-
-// =============== CORE ENTITIES ===============
-
 model Contact {
-  id               String   @id @default(uuid())
-  name             String?
-  phone            String   // WhatsApp phone
-  email            String?
-  company          String?
-  profile          String?  // Ex: "Arquiteto", "Construtora", "Pessoa Física"
-  country          String   @default("BR")
-  lastHumanOwner   String?
+  id             String        @id @default(uuid())
+  name           String?
+  phone          String        @unique
+  email          String?
+  company        String?
+  profile        String?
+  country        String        @default("BR")
+  lastHumanOwner String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  budgets        Budget[]
+  opportunities  Opportunity[]
 
-  // Relationships
-  budgets          Budget[]
-  opportunities    Opportunity[]
-  
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-
-  @@unique([phone])
   @@index([phone])
 }
 
 model Budget {
-  id               String   @id @default(uuid())
-  externalId       String?  // ERP ID
-  
-  contactId        String
-  contact          Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
-  
-  productName      String?
-  budgetValue      Decimal?
-  budgetDate       DateTime
-  projectName      String?
-  city             String?
-  status           String?  // "sent", "pending", "accepted", "denied"
-  notes            String?  @db.Text
-  source           String   @default("legacy_budget")
-
-  // Relationships
-  opportunities    Opportunity[]
-
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id            String        @id @default(uuid())
+  externalId    String?
+  contactId     String
+  productName   String?
+  budgetValue   Decimal?
+  budgetDate    DateTime
+  projectName   String?
+  city          String?
+  status        String?
+  notes         String?
+  source        String        @default("legacy_budget")
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  contact       Contact       @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  opportunities Opportunity[]
 
   @@index([contactId])
   @@index([budgetDate])
 }
 
 model Opportunity {
-  id                  String   @id @default(uuid())
-  
-  budgetId            String
-  budget              Budget   @relation(fields: [budgetId], references: [id], onDelete: Cascade)
-  
-  contactId           String
-  contact             Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
-
-  // Status & Logic
-  stage               String   @default("reactivation_pending") // "reactivation_pending", "contacted", "replied", "human_handoff", "closed"
-  temperature         String   @default("warm")                 // "cold", "warm", "hot"
-  priorityScore       Int      @default(0)
-  
-  // Timelines
-  nextFollowupAt      DateTime?
-  lastOutreachAt      DateTime?
-  lastResponseAt      DateTime?
-  
-  // Ownership
-  ownerType           String   @default("agent")              // "agent" | "human"
-  humanOwner          String?
-  
-  reactivationReason  String?
-
-  // Relationships
-  messages            Message[]
-
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  id                 String    @id @default(uuid())
+  budgetId           String
+  contactId          String
+  stage              String    @default("reactivation_pending")
+  temperature        String    @default("warm")
+  priorityScore      Int       @default(0)
+  nextFollowupAt     DateTime?
+  lastOutreachAt     DateTime?
+  lastResponseAt     DateTime?
+  ownerType          String    @default("agent")
+  humanOwner         String?
+  reactivationReason String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  messages           Message[]
+  budget             Budget    @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+  contact            Contact   @relation(fields: [contactId], references: [id], onDelete: Cascade)
 
   @@index([budgetId])
   @@index([contactId])
@@ -96,36 +71,25 @@ model Opportunity {
 }
 
 model Message {
-  id               String   @id @default(uuid())
-
-  opportunityId    String?
-  opportunity      Opportunity? @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
-
-  // ActiveLead relation (used by SDR pipeline)
-  leadId           String?
-  lead             ActiveLead? @relation("LeadMessages", fields: [leadId], references: [id], onDelete: Cascade)
-  tenantId         String?
-
-  direction        String?  // "incoming" | "outgoing"
-  type             String?  // "incoming" | "outgoing" (alias used by newer code)
-  channel          String   @default("whatsapp")
-  content          String   @db.Text
-
-  sentAt           DateTime? @default(now())
-  deliveryStatus   String?   // "sent", "delivered", "read", "failed"
-  intentDetected   String?
-  isAiGenerated    Boolean   @default(false)
-
-  // Sync fields (SDR runner)
-  syncStatus       SyncStatus?
-  syncError        String?
-
-  // Chatwoot integration
-  chatwootMessageId String?  @unique
-
-  rawPayload       Json?
-
-  createdAt        DateTime @default(now())
+  id                String       @id @default(uuid())
+  opportunityId     String?
+  direction         String?
+  channel           String       @default("whatsapp")
+  content           String
+  sentAt            DateTime?    @default(now())
+  deliveryStatus    String?
+  intentDetected    String?
+  rawPayload        Json?
+  createdAt         DateTime     @default(now())
+  chatwootMessageId String?      @unique
+  isAiGenerated     Boolean      @default(false)
+  leadId            String?
+  syncError         String?
+  syncStatus        SyncStatus?
+  tenantId          String?
+  type              String?
+  lead              ActiveLead?  @relation("LeadMessages", fields: [leadId], references: [id], onDelete: Cascade)
+  opportunity       Opportunity? @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
 
   @@index([opportunityId])
   @@index([leadId])
@@ -133,73 +97,42 @@ model Message {
 }
 
 model CampaignRule {
-  id                     String   @id @default(uuid())
-  name                   String
-  
-  minDaysSinceBudget     Int      @default(7)
-  maxDaysSinceBudget     Int?
-  allowedProducts        String[] @default([])
-  cooldownDays           Int      @default(15)
-  enabled                Boolean  @default(true)
-  
-  createdAt              DateTime @default(now())
-  updatedAt              DateTime @updatedAt
+  id                 String   @id @default(uuid())
+  name               String
+  minDaysSinceBudget Int      @default(7)
+  maxDaysSinceBudget Int?
+  allowedProducts    String[] @default([])
+  cooldownDays       Int      @default(15)
+  enabled            Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 }
 
-// =============== SYSTEM MANAGEMENT ===============
-
 model JobLog {
-  id                String    @id @default(uuid())
-  jobType           String
-  status            String
-  processedCount    Int       @default(0)
-  leadsProcessed    Int       @default(0)
-  leadsSkipped      Int       @default(0)
-  error             String?   @db.Text
-  startedAt         DateTime  @default(now())
-  completedAt       DateTime?
-  duration          Int?      // ms
+  id             String    @id @default(uuid())
+  jobType        String
+  status         String
+  processedCount Int       @default(0)
+  error          String?
+  startedAt      DateTime  @default(now())
+  completedAt    DateTime?
+  duration       Int?
+  leadsProcessed Int       @default(0)
+  leadsSkipped   Int       @default(0)
 
   @@index([jobType])
   @@index([startedAt])
 }
 
 model SystemHealth {
-  id                String    @id @default(uuid())
-  uazapiStatus      String    @default("unknown")
-  chatwootStatus    String    @default("unknown")
-  openaiStatus      String    @default("unknown")
-  lastChecked       DateTime  @default(now())
+  id             String   @id @default(uuid())
+  uazapiStatus   String   @default("unknown")
+  chatwootStatus String   @default("unknown")
+  openaiStatus   String   @default("unknown")
+  lastChecked    DateTime @default(now())
 
   @@index([lastChecked])
 }
-enum JobStatus {
-  RUNNING
-  SUCCESS
-  FAILED
-  PARTIAL
-}
-
-enum LeadStatus {
-  TRIAGE
-  FOLLOW_UP
-  HOT
-  ARCHIVED
-}
-
-enum IntentType {
-  BUY_NOW
-  SUPPORT
-  TRIAGE
-}
-
-enum SyncStatus {
-  PENDING
-  SYNCED
-  FAILED
-}
-
-// =============== ACTIVE LEAD PIPELINE ===============
 
 model ActiveLead {
   id                String      @id @default(uuid())
@@ -217,15 +150,12 @@ model ActiveLead {
   conversionStage   String?
   messageCount      Int         @default(0)
   lastMessageAt     DateTime?
-
   chatwootContactId String?
   chatwootConvId    String?
-
-  messages          Message[]   @relation("LeadMessages")
-  notes             Note[]
-
   createdAt         DateTime    @default(now())
   updatedAt         DateTime    @updatedAt
+  messages          Message[]   @relation("LeadMessages")
+  notes             Note[]
 
   @@unique([tenantId, phone], name: "tenant_phone_unique")
   @@index([tenantId])
@@ -234,7 +164,7 @@ model ActiveLead {
 }
 
 model ColdLead {
-  id               String   @id @default(uuid())
+  id               String     @id @default(uuid())
   tenantId         String
   originalLeadId   String
   phone            String
@@ -245,8 +175,7 @@ model ColdLead {
   lastStatus       LeadStatus
   freezeReason     String
   conversationData Json?
-
-  createdAt        DateTime @default(now())
+  createdAt        DateTime   @default(now())
 
   @@index([tenantId])
 }
@@ -258,7 +187,6 @@ model GovernanceAudit {
   actor     String
   success   Boolean
   metadata  Json?
-
   createdAt DateTime @default(now())
 
   @@index([tenantId])
@@ -266,13 +194,12 @@ model GovernanceAudit {
 }
 
 model Note {
-  id       String   @id @default(uuid())
-  leadId   String
-  lead     ActiveLead @relation(fields: [leadId], references: [id], onDelete: Cascade)
-  content  String   @db.Text
-  type     String   @default("general")
-
-  createdAt DateTime @default(now())
+  id        String     @id @default(uuid())
+  leadId    String
+  content   String
+  type      String     @default("general")
+  createdAt DateTime   @default(now())
+  lead      ActiveLead @relation(fields: [leadId], references: [id], onDelete: Cascade)
 
   @@index([leadId])
 }
@@ -283,9 +210,40 @@ model ConversationMetric {
   messageCount     Int      @default(0)
   userMessageCount Int      @default(0)
   aiMessageCount   Int      @default(0)
-
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
   @@index([leadId])
+}
+
+enum JobStatus {
+  RUNNING
+  SUCCESS
+  FAILED
+  PARTIAL
+}
+
+enum LeadStatus {
+  TRIAGE
+  FOLLOW_UP
+  HOT
+  HUMAN_REQUIRED
+  ARCHIVED
+}
+
+enum IntentType {
+  BUY_NOW
+  SUPPORT
+  TRIAGE
+  HANDOFF_HUMANO
+  SERVICO_FECHADO
+  LICITACAO_PERDIDA
+  OBRA_SEM_FRENTE
+  FOLLOW_UP_NORMAL
+}
+
+enum SyncStatus {
+  PENDING
+  SYNCED
+  FAILED
 }

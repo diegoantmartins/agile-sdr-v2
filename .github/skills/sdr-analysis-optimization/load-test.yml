@@ -1,0 +1,86 @@
+# Artillery Load Test Configuration for SDR Analysis
+# Usage: artillery run load-test.yml
+
+config:
+  target: "{{ env.TARGET_URL or 'http://localhost:3030' }}"
+  phases:
+    - duration: 60
+      arrivalRate: 10      # 10 users per second
+      name: "Ramp up"
+    - duration: 120
+      arrivalRate: 50      # Sustain at 50 users/second
+      name: "Peak load"
+    - duration: 60
+      arrivalRate: 10      # Ramp down
+      name: "Ramp down"
+
+  processor: "./load-test-helpers.js"
+  defaults:
+    headers:
+      Content-Type: "application/json"
+      User-Agent: "Artillery Load Tester"
+
+  ensure:
+    - name: "No 5xx errors"
+      condition: "statusCode != 500"
+      strict: true
+
+scenarios:
+  - name: "Lead Queries - Hot Leads"
+    flow:
+      - get:
+          url: "/api/leads"
+          json:
+            status: "HOT"
+            limit: 100
+          capture:
+            json: "$.data[0].id"
+            as: "leadId"
+
+  - name: "Lead Detail Fetch"
+    flow:
+      - get:
+          url: "/api/leads/{{ leadPhone or '5511999999999' }}"
+          expect:
+            - statusCode: 200
+            - contentType: json
+
+  - name: "Create Lead"
+    flow:
+      - post:
+          url: "/api/leads"
+          json:
+            phone: "{{ randomPhone() }}"
+            name: "Test User {{ $timestamp }}"
+            email: "test{{ $timestamp }}@example.com"
+            company: "Test Company"
+            source: "load-test"
+          expect:
+            - statusCode: 201
+
+  - name: "Update Lead Score"
+    flow:
+      - patch:
+          url: "/api/leads/{{ leadId or 'test-id' }}"
+          json:
+            score: "{{ randomInt(0, 100) }}"
+
+  - name: "Health Check"
+    flow:
+      - get:
+          url: "/health"
+          expect:
+            - statusCode: 200
+
+# Metrics collection
+output:
+  - type: "statsd"
+    host: "localhost"
+    port: 8125
+    prefix: "sdr_load"
+
+  - type: "csv"
+    filename: "results-{{ env.RUN_ID or timestamp() }}.csv"
+
+  - type: "json"
+    filename: "results-{{ env.RUN_ID or timestamp() }}.json"

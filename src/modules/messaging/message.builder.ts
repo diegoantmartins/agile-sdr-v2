@@ -1,23 +1,32 @@
 export class MessageBuilder {
+  /**
+   * Primeiro contato para reativação de base (Agile Steel)
+   */
   buildFirstTouch(input: {
     name?: string | null;
-    productName: string;
     projectName?: string | null;
   }): string {
-    const firstName = input.name ? input.name.split(' ')[0] : 'Olá';
-    const projectChunk = input.projectName
-      ? ` sobre o projeto "${input.projectName}"`
-      : "";
+    const firstName = input.name ? input.name.split(' ')[0] : 'tudo bem';
+    const namePlaceholder = input.name ? firstName : 'amigo(a)';
 
-    return `Olá, ${firstName}. Tudo bem?
+    return `Oi, ${namePlaceholder}, tudo bem? Aqui é da Agile Steel. Faz um tempo que não nos falamos, você está com alguma obra em andamento agora?`;
+  }
 
-Estou retomando o contato${projectChunk} referente ao orçamento de ${input.productName}.
+  /**
+   * Follow-up de propostas já existentes (Segundo Agente)
+   */
+  buildProposalFollowUp(input: {
+    name?: string | null;
+    proposalNumber: string;
+  }): string {
+    const firstName = input.name ? input.name.split(' ')[0] : 'como você está';
+    const namePlaceholder = input.name ? firstName : 'tudo bem';
 
-Queria entender se essa demanda ainda está em andamento ou se ficou para mais à frente.`;
+    return `Oi, ${namePlaceholder}, bem? Como você está? Então a proposta ${input.proposalNumber}, como que está o andamento dela?`;
   }
 
   buildHandoffNote(intent: string): string {
-    return `Lead reativado automaticamente.\nIntenção detectada: ${intent}\nFavor assumir o atendimento.`;
+    return `Lead reativado automaticamente.\nIntenção detectada: ${intent}\nFavor assumir o atendimento no Chatwoot (equipe Daisy).`;
   }
 }
 

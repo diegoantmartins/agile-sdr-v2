@@ -35,6 +35,7 @@ echo ""
 echo -e "${YELLOW}5. Creating Test Lead...${NC}"
 LEAD=$(curl -s -X POST $API/api/leads \
   -H "Content-Type: application/json" \
+  -H "x-tenant-id: default-tenant" \
   -d '{
     "phone": "5511999999999",
     "name": "Test User",
@@ -48,7 +49,7 @@ echo ""
 
 # List Leads
 echo -e "${YELLOW}6. Listing All Leads...${NC}"
-curl -s $API/api/leads | jq '.'
+curl -s $API/api/leads -H "x-tenant-id: default-tenant" | jq '.'
 echo ""
 
 # Send Test Message (Intent Classification)
@@ -56,8 +57,9 @@ echo -e "${YELLOW}7. Testing Intent Classification (OpenAI)...${NC}"
 echo -e "${YELLOW}   (Will use pattern matching, OpenAI if key configured)${NC}"
 curl -s -X POST $API/test/send-message \
   -H "Content-Type: application/json" \
+  -H "x-tenant-id: default-tenant" \
   -d '{
-    "from": "5511999999999",
+    "phone": "5511999999999",
     "message": "Quero saber sobre seus serviços de consultoria"
   }' | jq .
 echo ""

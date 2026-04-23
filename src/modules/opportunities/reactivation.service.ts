@@ -46,7 +46,6 @@ export class ReactivationService {
 
       const message = messageBuilder.buildFirstTouch({
         name: candidate.contact.name,
-        productName: candidate.productName || 'nossos serviços',
         projectName: candidate.projectName,
       });
 

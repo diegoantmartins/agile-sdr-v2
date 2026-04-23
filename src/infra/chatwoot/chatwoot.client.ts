@@ -1,6 +1,7 @@
 // src/infra/chatwoot/chatwoot.client.ts
 
 import axios, { AxiosInstance } from 'axios';
+import https from 'https';
 import { config } from '../../config/env';
 import { logger } from '../../shared/utils/logger';
 import { ExternalApiError } from '../../shared/utils/errors';
@@ -44,7 +45,10 @@ export class ChatwootClient {
       headers: {
         'Content-Type': 'application/json',
         'api_access_token': config.CHATWOOT_API_TOKEN
-      }
+      },
+      httpsAgent: new https.Agent({
+        rejectUnauthorized: false
+      })
     });
 
     // Interceptors
@@ -199,6 +203,63 @@ export class ChatwootClient {
       return response.data;
     } catch (error: any) {
       logger.error('[CHATWOOT] Erro ao enviar mensagem:', error.message);
+      throw error;
+    }
+  }
+
+  /**
+   * Adicionar etiquetas (labels) em uma conversa
+   */
+  async addLabels(conversationId: number, labels: string[]): Promise<string[]> {
+    try {
+      logger.debug('[CHATWOOT] Adicionando etiquetas', { conversationId, labels });
+      
+      const response = await this.client.post(
+        `/api/v1/accounts/${this.accountId}/conversations/${conversationId}/labels`,
+        { labels }
+      );
+      
+      return response.data?.payload || [];
+    } catch (error: any) {
+      logger.error('[CHATWOOT] Erro ao adicionar etiquetas:', error.message);
+      throw error;
+    }
+  }
+
+  /**
+   * Alterar status da conversa (open, resolved, pending, snoozed)
+   */
+  async toggleStatus(conversationId: number, status: 'open' | 'resolved' | 'pending' | 'snoozed'): Promise<any> {
+    try {
+      logger.debug('[CHATWOOT] Alterando status da conversa', { conversationId, status });
+      const response = await this.client.post(
+        `/api/v1/accounts/${this.accountId}/conversations/${conversationId}/toggle_status`,
+        { status }
+      );
+      return response.data;
+    } catch (error: any) {
+      logger.error('[CHATWOOT] Erro ao alterar status:', error.message);
+      throw error;
+    }
+  }
+
+  /**
+   * Enviar uma nota privada (interna) na conversa
+   */
+  async sendPrivateNote(conversationId: number, content: string): Promise<ChatwootMessage> {
+    try {
+      logger.debug('[CHATWOOT] Enviando nota privada', { conversationId });
+      const response = await this.client.post(
+        `/api/v1/accounts/${this.accountId}/conversations/${conversationId}/messages`,
+        {
+          content,
+          message_type: 0, // 0 for messages
+          private: true
+        }
+      );
+      return response.data;
+    } catch (error: any) {
+      logger.error('[CHATWOOT] Erro ao enviar nota privada:', error.message);
       throw error;
     }
   }

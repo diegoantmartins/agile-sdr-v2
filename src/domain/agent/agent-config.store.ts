@@ -28,6 +28,13 @@ export interface AgentRuntimeConfig {
 
   // Compliance
   disallowedTerms: string[];
+
+  // Agile Specifics (Moved to config)
+  handoffLabels: string[];
+  handoffTargetName: string;
+  pivotProducts: string[];
+  primaryProduct: string;
+  enableDdiLanguageDetection: boolean;
 }
 
 export class AgentConfigStore {
@@ -99,7 +106,14 @@ export class AgentConfigStore {
       handoffEnabled: Boolean(merged.handoffEnabled),
       sendToChatwoot: Boolean(merged.sendToChatwoot),
       sendToSlack: Boolean(merged.sendToSlack),
-      disallowedTerms
+      disallowedTerms,
+
+      // Agile Specifics
+      handoffLabels: Array.isArray(merged.handoffLabels) ? merged.handoffLabels.map(v => String(v).trim()).filter(Boolean) : ['agile-handoff', 'urgente'],
+      handoffTargetName: String(merged.handoffTargetName || 'Daisy').trim(),
+      pivotProducts: Array.isArray(merged.pivotProducts) ? merged.pivotProducts.map(v => String(v).trim()).filter(Boolean) : ['pisos vinílicos', 'forro acústico', 'steel frame'],
+      primaryProduct: String(merged.primaryProduct || 'Drywall').trim(),
+      enableDdiLanguageDetection: merged.enableDdiLanguageDetection !== undefined ? Boolean(merged.enableDdiLanguageDetection) : true
     };
   }
 

@@ -1,0 +1,302 @@
+{
+  "name": "SDR Daily Dispatch - N8N Workflow",
+  "description": "Orchestrates daily lead dispatch from SDR Core to WhatsApp via UAZAPI. Fetches hot leads, sends batched messages, logs results.",
+  "workflow": {
+    "nodes": [
+      {
+        "name": "Webhook Trigger",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 1,
+        "position": [100, 250],
+        "webhookId": "{{ SDR_N8N_WEBHOOK_ID }}",
+        "webhookPath": "dispatch",
+        "httpMethod": "POST",
+        "active": true,
+        "notes": "Triggered daily at 9 AM by SDR Fastify endpoint"
+      },
+      {
+        "name": "SDR - Fetch Hot Leads",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4,
+        "position": [300, 250],
+        "parameters": {
+          "url": "{{ env.SDR_BASE_URL }}/api/leads",
+          "method": "GET",
+          "headerParametersUi": "keyvalue",
+          "headers": {
+            "Authorization": "Bearer {{ env.SDR_API_TOKEN }}",
+            "Content-Type": "application/json"
+          },
+          "queryParametersUi": "keyvalue",
+          "queryParameters": [
+            {
+              "name": "status",
+              "value": "HOT"
+            },
+            {
+              "name": "limit",
+              "value": "10000"
+            }
+          ],
+          "returnFullResponse": false,
+          "responseFormat": "json"
+        },
+        "onError": "stopWorkflow",
+        "notes": "Fetch all hot leads prioritized by score"
+      },
+      {
+        "name": "Parse Leads Response",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 1,
+        "position": [500, 250],
+        "parameters": {
+          "jsCode": "// Extract leads array and add metadata\nconst leads = $input.all()[0].json.data || [];\n\nreturn leads.map((lead, index) => ({\n  ...lead,\n  batch_index: Math.floor(index / 500),\n  retry_count: 0,\n  status: 'pending'\n}));"
+        }
+      },
+      {
+        "name": "Split Into Batches",
+        "type": "n8n-nodes-base.splitInBatches",
+        "typeVersion": 3,
+        "position": [700, 250],
+        "parameters": {
+          "batchSize": 500,
+          "options": {}
+        }
+      },
+      {
+        "name": "Loop Over Batch Leads",
+        "type": "n8n-nodes-base.loop",
+        "typeVersion": 1,
+        "position": [900, 250],
+        "description": "For each lead in batch, send WhatsApp message",
+        "loopOver": "leads"
+      },
+      {
+        "name": "UAZAPI - Send Message",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4,
+        "position": [1100, 250],
+        "parameters": {
+          "url": "https://api.uazapi.com/v1/send",
+          "method": "POST",
+          "headerParametersUi": "keyvalue",
+          "headers": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ env.UAZAPI_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyParametersUi": "json",
+          "body": {
+            "phone": "{{ $node['Loop over Batch Leads'].item.phone }}",
+            "message": "{{ generateDispatchMessage($node['Loop over Batch Leads'].item) }}",
+            "context": {
+              "lead_id": "{{ $node['Loop over Batch Leads'].item.id }}",
+              "company": "{{ $node['Loop over Batch Leads'].item.company }}",
+              "source": "daily_dispatch"
+            }
+          },
+          "options": {
+            "timeout": 10000,
+            "retry": 2,
+            "retryDelay": 1000
+          }
+        },
+        "onError": "continueErrorOutput",
+        "notes": "Send message to each lead individually"
+      },
+      {
+        "name": "Handle Send Errors",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 1,
+        "position": [1300, 450],
+        "parameters": {
+          "jsCode": "// Log failed dispatches\nconst error = $input.all()[0].json.error;\n\nreturn {\n  type: 'error',\n  lead_id: error.lead_id,\n  reason: error.reason,\n  timestamp: new Date().toISOString()\n};"
+        }
+      },
+      {
+        "name": "SDR - Log Dispatch Result",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4,
+        "position": [1500, 250],
+        "parameters": {
+          "url": "{{ env.SDR_BASE_URL }}/api/dispatch-log",
+          "method": "POST",
+          "headerParametersUi": "keyvalue",
+          "headers": {
+            "Authorization": "Bearer {{ env.SDR_API_TOKEN }}",
+            "Content-Type": "application/json"
+          },
+          "bodyParametersUi": "json",
+          "body": {
+            "lead_id": "{{ $node['Loop over Batch Leads'].item.id }}",
+            "status": "{{ $node['UAZAPI - Send Message'].item.json.status }}",
+            "message_id": "{{ $node['UAZAPI - Send Message'].item.json.message_id }}",
+            "timestamp": "{{ now().toISOString() }}"
+          }
+        },
+        "onError": "continueErrorOutput"
+      },
+      {
+        "name": "Wait for Batch Completion",
+        "type": "n8n-nodes-base.wait",
+        "typeVersion": 1,
+        "position": [1700, 250],
+        "parameters": {
+          "waitType": "seconds",
+          "secondsDelay": 2
+        },
+        "notes": "Brief pause between batches to avoid overwhelming API"
+      },
+      {
+        "name": "Aggregate Results",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 1,
+        "position": [1900, 250],
+        "parameters": {
+          "jsCode": "// Aggregate all dispatch results\nconst items = $input.all();\nconst results = items.map(item => item.json);\n\nconst summary = {\n  total_dispatched: results.filter(r => r.status === 'sent').length,\n  total_failed: results.filter(r => r.status === 'error').length,\n  total_pending: results.filter(r => r.status === 'pending').length,\n  timestamp: new Date().toISOString(),\n  duration_ms: Date.now() - $input.all()[0].json.batch_start_time\n};\n\nreturn summary;"
+        }
+      },
+      {
+        "name": "SDR - Send Final Report",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4,
+        "position": [2100, 250],
+        "parameters": {
+          "url": "{{ env.SDR_BASE_URL }}/api/dispatch-report",
+          "method": "POST",
+          "headerParametersUi": "keyvalue",
+          "headers": {
+            "Authorization": "Bearer {{ env.SDR_API_TOKEN }}",
+            "Content-Type": "application/json"
+          },
+          "bodyParametersUi": "json",
+          "body": {
+            "execution_id": "{{ $execution.id }}",
+            "workflow_name": "{{ $workflow.name }}",
+            "summary": "{{ $node['Aggregate Results'].json }}"
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Webhook Trigger": {
+        "main": [
+          [
+            {
+              "node": "SDR - Fetch Hot Leads",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "SDR - Fetch Hot Leads": {
+        "main": [
+          [
+            {
+              "node": "Parse Leads Response",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Parse Leads Response": {
+        "main": [
+          [
+            {
+              "node": "Split Into Batches",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Split Into Batches": {
+        "main": [
+          [
+            {
+              "node": "Loop over Batch Leads",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Loop over Batch Leads": {
+        "main": [
+          [
+            {
+              "node": "UAZAPI - Send Message",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "UAZAPI - Send Message": {
+        "main": [
+          [
+            {
+              "node": "SDR - Log Dispatch Result",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Handle Send Errors",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "SDR - Log Dispatch Result": {
+        "main": [
+          [
+            {
+              "node": "Wait for Batch Completion",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Wait for Batch Completion": {
+        "main": [
+          [
+            {
+              "node": "Aggregate Results",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Aggregate Results": {
+        "main": [
+          [
+            {
+              "node": "SDR - Send Final Report",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    }
+  },
+  "environmentVariables": {
+    "SDR_BASE_URL": "http://localhost:3030",
+    "SDR_API_TOKEN": "your-token",
+    "UAZAPI_KEY": "your-key",
+    "N8N_WEBHOOK_ID": "generate-in-n8n"
+  },
+  "deploymentNotes": "1. Set environment variables in N8N Credentials\n2. Trigger manually first to validate\n3. Schedule webhook or call from SDR Cron: /admin/dispatch-trigger\n4. Monitor execution logs in N8N UI\n5. Set up error alerts to your Slack/Discord"
+}

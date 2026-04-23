@@ -84,6 +84,7 @@ describe('IntentClassifier', () => {
         'HANDOFF_HUMANO',
         'A obra vai começar essa semana',
         'Ricardo',
+        'Daisy',
         'AGS-2024-001'
       );
       expect(summary).toContain('🔥');

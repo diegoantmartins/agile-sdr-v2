@@ -1,6 +1,7 @@
 // src/infra/uazapi/uazapi.client.ts
 
 import axios, { AxiosInstance } from 'axios';
+import https from 'https';
 import { config } from '../../config/env';
 import { logger } from '../../shared/utils/logger';
 import { ExternalApiError } from '../../shared/utils/errors';
@@ -38,8 +39,11 @@ export class UAZAPIClient {
       timeout: 15000,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${config.UAZAPI_KEY}`
-      }
+        'token': config.UAZAPI_KEY
+      },
+      httpsAgent: new https.Agent({
+        rejectUnauthorized: false
+      })
     });
 
     // Interceptors
@@ -64,9 +68,9 @@ export class UAZAPIClient {
     try {
       logger.debug('[UAZAPI] Enviando mensagem', { phone: payload.phone });
 
-      const response = await this.client.post('/message/text', {
-        phone: this.normalizePhone(payload.phone),
-        message: payload.message
+      const response = await this.client.post('/send/text', {
+        number: this.normalizePhone(payload.phone),
+        text: payload.message
       });
 
       logger.info('[UAZAPI] Mensagem enviada com sucesso', {
@@ -76,7 +80,7 @@ export class UAZAPIClient {
 
       return {
         success: true,
-        messageId: response.data?.messageId
+        messageId: response.data?.messageid || response.data?.id
       };
     } catch (error) {
       const err = error as any;

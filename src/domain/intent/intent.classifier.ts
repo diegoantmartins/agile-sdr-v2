@@ -260,20 +260,21 @@ Responda APENAS em JSON:
   }
 
   /**
-   * Gera resumo de handoff para a Daisy (agente humano comercial da Agile Steel).
+   * Gera resumo de handoff para o comercial (Agile Steel).
    */
   generateAgileHandoffSummary(
     intent: AgileIntent,
     message: string,
     leadName: string,
+    targetName: string = 'Daisy',
     proposalNumber?: string
   ): string {
     const proposal = proposalNumber ? ` | Proposta: ${proposalNumber}` : '';
     const summaries: Record<AgileIntent, string> = {
-      HANDOFF_HUMANO: `🔥 *${leadName} está PRONTO para execução!*${proposal}\n"${message}"\n⏰ URGENTE — Transferir para Daisy imediatamente.`,
-      LICITACAO_PERDIDA: `⚠️ *${leadName} — Licitação perdida*${proposal}\n"${message}"\n🎯 Ação: Descobrir construtora vencedora e repassar orçamento.`,
-      OBRA_SEM_FRENTE: `📅 *${leadName} — Obra sem frente*${proposal}\n"${message}"\n🔄 Ação: Agendar retorno em 60 dias.`,
-      SERVICO_FECHADO: `🔄 *${leadName} — Serviço fechado com concorrente*${proposal}\n"${message}"\n💡 Ação: Pivot para produto alternativo (já feito pelo agente).`,
+      HANDOFF_HUMANO: `🔥 *${leadName} está PRONTO para execução!*${proposal}\n"${message}"\n⏰ URGENTE — Encaminhar para ${targetName}/Equipe de Orçamentos agora.`,
+      LICITACAO_PERDIDA: `⚠️ *${leadName} — Licitação perdida*${proposal}\n"${message}"\n🎯 Ação: ${targetName} deve descobrir a construtora vencedora para repasse.`,
+      OBRA_SEM_FRENTE: `📅 *${leadName} — Obra sem frente*${proposal}\n"${message}"\n🔄 Ação: Agendar retorno no CRM.`,
+      SERVICO_FECHADO: `🔄 *${leadName} — Serviço fechado com concorrente*${proposal}\n"${message}"\n💡 Ação: Pivot de produto sugerido pela IA.`,
       FOLLOW_UP_NORMAL: `📋 *${leadName} — Follow-up normal*${proposal}\n"${message}"\n⏳ Proposta em análise.`,
       TRIAGE: `❓ *${leadName} — Mensagem sem classificação clara*${proposal}\n"${message}"`
     };

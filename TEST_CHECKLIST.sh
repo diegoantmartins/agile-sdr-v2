@@ -84,7 +84,7 @@ echo "6️⃣  LIST LEADS"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 echo "GET $API_URL/api/leads"
-RESPONSE=$(curl -s $API_URL/api/leads | jq .)
+RESPONSE=$(curl -s $API_URL/api/leads -H "x-tenant-id: default-tenant" | jq .)
 echo "Response:"
 echo "$RESPONSE"
 echo ""
@@ -98,6 +98,7 @@ echo "POST $API_URL/test/send-message"
 echo "Body: {\"phone\": \"5511999999999\", \"message\": \"Teste do agente\"}"
 RESPONSE=$(curl -s -X POST $API_URL/test/send-message \
   -H "Content-Type: application/json" \
+  -H "x-tenant-id: default-tenant" \
   -d '{"phone": "5511999999999", "message": "Teste do agente"}' | jq .)
 echo "Response:"
 echo "$RESPONSE"

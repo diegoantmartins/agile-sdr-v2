@@ -80,6 +80,8 @@ services:
       MONGODB_URL: mongodb://agile:${MONGO_PASSWORD}@agile-sdr-mongodb:27017/agile-agenda?authSource=admin
       REDIS_URL: redis://:${REDIS_PASSWORD}@agile-sdr-redis:6386
       PORT: 3030
+      UAZAPI_KEY: 9dc5f082-d000-46a3-8fe3-6161fb2426a5
+      UAZAPI_URL: https://synapsea.uazapi.com
     ports:
       - "0.0.0.0:3030:3030"
     depends_on:

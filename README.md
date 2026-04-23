@@ -291,7 +291,7 @@ Quando ativo, o webhook de WhatsApp processa a intenção e também gera uma res
 - API de leitura: `GET /api/admin/agent-config`
 - API de atualização: `PUT /api/admin/agent-config`
 
-Use o subdomínio desejado `sdr-synapasea.sentiia.com.br` no proxy reverso apontando para o serviço da API para gerir tom/prompt do agente em runtime.
+Use o subdomínio desejado `sdrconfig.sentiia.com.br` no proxy reverso apontando para o serviço da API para gerir tom/prompt do agente em runtime.
 
 Exemplos prontos de Nginx e Traefik estão em `DEPLOYMENT_GUIDE.md` na seção **Subdomínio para o Painel de Configuração do Agente**.
 

@@ -146,7 +146,7 @@ export function buildAgentConfigPage(): string {
 <body>
   <div class="container">
     <h1>Synapsea • Dashboard de Configuração do Agente</h1>
-    <p class="sub">Subdomínio alvo: <strong>sdr-synapasea.sentiia.com.br</strong> • controle total por nicho, tipo de venda, prompt e automações.</p>
+    <p class="sub">Subdomínio alvo: <strong>sdrconfig.sentiia.com.br</strong> • controle total por nicho, tipo de venda, prompt e automações.</p>
 
     <section class="topology">
       <svg viewBox="0 0 1200 220" preserveAspectRatio="none">
@@ -248,6 +248,27 @@ export function buildAgentConfigPage(): string {
       </section>
 
       <section class="card">
+        <h3>Agile Steel • Especialização</h3>
+        <p class="hint">Regras específicas para o playbook da Agile Steel.</p>
+
+        <label>Nome do Contato para Handoff <span class="badge required">obrigatório</span>
+          <input id="handoffTargetName" placeholder="Ex: Daisy" />
+        </label>
+
+        <label>Etiquetas do Chatwoot (1 por linha) <span class="badge optional">opcional</span>
+          <textarea id="handoffLabels" placeholder="agile-handoff\nurgente"></textarea>
+        </label>
+
+        <label>Produto Principal (Carro-chefe) <span class="badge required">obrigatório</span>
+          <input id="primaryProduct" placeholder="Ex: Drywall" />
+        </label>
+
+        <label>Produtos para Pivotagem (1 por linha) <span class="badge required">obrigatório</span>
+          <textarea id="pivotProducts" placeholder="Pisos Vinílicos\nForro Acústico\nSteel Frame"></textarea>
+        </label>
+      </section>
+
+      <section class="card">
         <h3>Ativações, Integrações e Segurança</h3>
         <p class="hint"><span class="ok-dot"></span>Pontos ativos brilham no dashboard.</p>
 
@@ -256,6 +277,7 @@ export function buildAgentConfigPage(): string {
         <label><input id="handoffEnabled" type="checkbox" /> Handoff para humano (quando necessário) <span class="badge optional">opcional</span></label>
         <label><input id="sendToChatwoot" type="checkbox" /> Sincronizar no Chatwoot <span class="badge optional">opcional</span></label>
         <label><input id="sendToSlack" type="checkbox" /> Notificar Slack <span class="badge optional">opcional</span></label>
+        <label><input id="enableDdiLanguageDetection" type="checkbox" /> Detecção Automática de Idioma (PT-BR / PT-PT) <span class="badge optional">opcional</span></label>
 
         <label>Token admin (não salvar no navegador em máquinas compartilhadas)
           <input id="adminToken" type="password" placeholder="Cole o ADMIN_CONFIG_TOKEN" />
@@ -336,12 +358,6 @@ export function buildAgentConfigPage(): string {
       }
     };
 
-    const fieldIds = [
-      'businessNiche','salesType','primaryCTA','companyName','objective','tone','language','maxReplyChars',
-      'fallbackMessage','customPrompt','qualificationQuestions','disallowedTerms','autoReplyEnabled',
-      'emojisEnabled','handoffEnabled','sendToChatwoot','sendToSlack'
-    ];
-
     function getTokenHeaders() {
       const token = document.getElementById('adminToken').value.trim();
       return token ? { 'x-admin-token': token } : {};
@@ -360,11 +376,15 @@ export function buildAgentConfigPage(): string {
     }
 
     function applyData(data) {
+      // Checkboxes
       document.getElementById('autoReplyEnabled').checked = !!data.autoReplyEnabled;
       document.getElementById('emojisEnabled').checked = !!data.emojisEnabled;
       document.getElementById('handoffEnabled').checked = !!data.handoffEnabled;
       document.getElementById('sendToChatwoot').checked = !!data.sendToChatwoot;
       document.getElementById('sendToSlack').checked = !!data.sendToSlack;
+      document.getElementById('enableDdiLanguageDetection').checked = data.enableDdiLanguageDetection !== false;
+
+      // Inputs
       document.getElementById('companyName').value = data.companyName || '';
       document.getElementById('objective').value = data.objective || '';
       document.getElementById('tone').value = data.tone || '';
@@ -375,8 +395,16 @@ export function buildAgentConfigPage(): string {
       document.getElementById('primaryCTA').value = data.primaryCTA || '';
       document.getElementById('fallbackMessage').value = data.fallbackMessage || '';
       document.getElementById('customPrompt').value = data.customPrompt || '';
+      
+      // Lists
       document.getElementById('qualificationQuestions').value = listToTextarea(data.qualificationQuestions);
       document.getElementById('disallowedTerms').value = listToTextarea(data.disallowedTerms);
+
+      // Agile Specifics
+      document.getElementById('handoffTargetName').value = data.handoffTargetName || 'Daisy';
+      document.getElementById('handoffLabels').value = listToTextarea(data.handoffLabels);
+      document.getElementById('primaryProduct').value = data.primaryProduct || 'Drywall';
+      document.getElementById('pivotProducts').value = listToTextarea(data.pivotProducts);
     }
 
     function getPayload() {
@@ -386,6 +414,8 @@ export function buildAgentConfigPage(): string {
         handoffEnabled: document.getElementById('handoffEnabled').checked,
         sendToChatwoot: document.getElementById('sendToChatwoot').checked,
         sendToSlack: document.getElementById('sendToSlack').checked,
+        enableDdiLanguageDetection: document.getElementById('enableDdiLanguageDetection').checked,
+
         companyName: document.getElementById('companyName').value,
         objective: document.getElementById('objective').value,
         tone: document.getElementById('tone').value,
@@ -396,29 +426,44 @@ export function buildAgentConfigPage(): string {
         primaryCTA: document.getElementById('primaryCTA').value,
         fallbackMessage: document.getElementById('fallbackMessage').value,
         customPrompt: document.getElementById('customPrompt').value,
+        
         qualificationQuestions: textareaToList(document.getElementById('qualificationQuestions').value),
-        disallowedTerms: textareaToList(document.getElementById('disallowedTerms').value)
+        disallowedTerms: textareaToList(document.getElementById('disallowedTerms').value),
+
+        // Agile Specifics
+        handoffTargetName: document.getElementById('handoffTargetName').value,
+        handoffLabels: textareaToList(document.getElementById('handoffLabels').value),
+        primaryProduct: document.getElementById('primaryProduct').value,
+        pivotProducts: textareaToList(document.getElementById('pivotProducts').value)
       };
     }
 
     async function loadConfig() {
-      const res = await fetch('/api/admin/agent-config', { headers: getTokenHeaders() });
-      if (!res.ok) throw new Error('Falha ao carregar configuração');
-      const data = await res.json();
-      applyData(data);
-      setStatus('Configuração carregada com sucesso.');
+      try {
+        const res = await fetch('/api/admin/agent-config', { headers: getTokenHeaders() });
+        if (!res.ok) throw new Error('Falha ao carregar configuração');
+        const data = await res.json();
+        applyData(data);
+        setStatus('Configuração carregada com sucesso.');
+      } catch (err) {
+        setStatus('❌ Erro ao carregar: ' + err.message);
+      }
     }
 
     async function saveConfig() {
-      const res = await fetch('/api/admin/agent-config', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', ...getTokenHeaders() },
-        body: JSON.stringify(getPayload())
-      });
-      if (!res.ok) throw new Error('Falha ao salvar configuração');
-      const data = await res.json();
-      applyData(data);
-      setStatus('✅ Configuração salva com sucesso.');
+      try {
+        const res = await fetch('/api/admin/agent-config', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', ...getTokenHeaders() },
+          body: JSON.stringify(getPayload())
+        });
+        if (!res.ok) throw new Error('Falha ao salvar configuração');
+        const data = await res.json();
+        applyData(data);
+        setStatus('✅ Configuração salva com sucesso.');
+      } catch (err) {
+        setStatus('❌ Erro ao salvar: ' + err.message);
+      }
     }
 
     function applyTemplate() {
@@ -434,11 +479,11 @@ export function buildAgentConfigPage(): string {
       setStatus('Template aplicado. Revise e clique em salvar.');
     }
 
-    document.getElementById('loadBtn').addEventListener('click', () => loadConfig().catch(() => setStatus('❌ Erro ao carregar. Verifique token/permissão.')));
-    document.getElementById('saveBtn').addEventListener('click', () => saveConfig().catch(() => setStatus('❌ Erro ao salvar. Verifique token/permissão.')));
+    document.getElementById('loadBtn').addEventListener('click', loadConfig);
+    document.getElementById('saveBtn').addEventListener('click', saveConfig);
     document.getElementById('applyTemplateBtn').addEventListener('click', applyTemplate);
 
-    applyTemplate();
+    loadConfig();
   </script>
 </body>
 </html>`;

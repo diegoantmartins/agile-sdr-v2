@@ -19,12 +19,19 @@ export interface AgentPromptConfig {
   emojisEnabled: boolean;
 }
 
+export interface ChatMessage {
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+}
+
 export interface GenerateReplyInput {
   leadName: string;
+  phone: string;
   incomingMessage: string;
   intent: LeadIntent;
   score: number;
   conversationStage?: string | null;
+  history?: ChatMessage[];
 }
 
 export class ResponseGenerator {
@@ -39,26 +46,34 @@ export class ResponseGenerator {
   }
 
   async generateReply(input: GenerateReplyInput): Promise<string> {
-    const systemPrompt = this.buildSystemPrompt();
+    const languageStyle = this.detectLanguageStyle(input.phone);
+    const systemPrompt = this.buildSystemPrompt(languageStyle);
+
+    const messages: ChatMessage[] = [
+      { role: 'system', content: systemPrompt }
+    ];
+
+    if (input.history && input.history.length > 0) {
+      messages.push(...input.history.slice(-10));
+    }
+
+    messages.push({
+      role: 'user',
+      content: JSON.stringify({
+        leadName: input.leadName,
+        incomingMessage: input.incomingMessage,
+        intent: input.intent,
+        score: input.score,
+        conversationStage: input.conversationStage || 'prospecting'
+      })
+    });
 
     try {
       const completion = await this.openai.chat.completions.create({
         model: this.model,
-        temperature: 0.5,
-        max_tokens: 260,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          {
-            role: 'user',
-            content: JSON.stringify({
-              leadName: input.leadName,
-              incomingMessage: input.incomingMessage,
-              intent: input.intent,
-              score: input.score,
-              conversationStage: input.conversationStage || 'awareness'
-            })
-          }
-        ]
+        temperature: 0.3, // Reduzido para maior consistência e aderência às regras
+        max_tokens: 350,
+        messages: messages as any
       });
 
       const reply = completion.choices[0]?.message?.content?.trim();
@@ -73,40 +88,50 @@ export class ResponseGenerator {
     }
   }
 
-  private buildSystemPrompt(): string {
-    return `Você é um SDR virtual da empresa ${this.promptConfig.companyName}.
+  private detectLanguageStyle(phone: string): string {
+    if (phone.startsWith('351')) return 'Português de Portugal (PT-PT)';
+    return 'Português do Brasil (PT-BR)';
+  }
 
-Contexto do negócio:
-- Nicho: ${this.promptConfig.businessNiche}
-- Tipo de venda: ${this.promptConfig.salesType}
-- Objetivo principal: ${this.promptConfig.objective}
+  private buildSystemPrompt(languageStyle: string): string {
+    return `Você é o Agente SDR (Sales Development Representative) de Elite da Agile Steel Construction.
+Sua missão é a qualificação de leads e o agendamento de orçamentos técnicos.
 
-Regras de estilo:
-- Responda em ${this.promptConfig.language}.
-- Use tom ${this.promptConfig.tone}.
-- Mensagem curta e clara (máximo ${this.promptConfig.maxReplyChars} caracteres).
-- Emojis ${this.promptConfig.emojisEnabled ? 'permitidos com moderação' : 'não permitidos'}.
-- Faça no máximo 1 pergunta por resposta.
-- Não invente preços ou promessas não informadas.
-- CTA prioritário: ${this.promptConfig.primaryCTA}
-- Perguntas de qualificação prioritárias: ${this.promptConfig.qualificationQuestions.join(' | ')}
-- Termos proibidos: ${this.promptConfig.disallowedTerms.join(', ') || 'nenhum'}
-- Se a intenção for BUY_NOW, avance para próximo passo comercial.
-- Se for SUPPORT, explique de forma simples e convide para continuidade.
-- Se for TRIAGE, faça uma pergunta para qualificar necessidade.
-- Nunca mencione que é um modelo de IA.
+### O "MANUAL DO SDR PERFEITO" (DIRETRIZES TÉCNICAS):
+1. REGRA DE OURO: Nunca faça mais de UMA pergunta por mensagem. Mantenha o foco.
+2. TOM CONSULTIVO: Você não é um atendente de SAC. Você é um consultor. Use frases que mostrem que você entende de obras.
+3. CONCISÃO: No WhatsApp, menos é mais. Evite frases clichês como "Como posso te ajudar hoje?". Se o lead já disse o que quer, vá direto ao ponto.
+4. ESTILO: Use uma linguagem profissional, mas natural para chat (sem formalismo excessivo, mas com autoridade).
 
-Instruções customizadas:
-${this.promptConfig.customPrompt || 'Sem instruções adicionais.'}
+### CONTEXTO DA AGILE STEEL:
+- SOLUÇÃO COMPLETA: Nós entregamos MATERIAL + INSTALAÇÃO. Não vendemos material solto.
+- RESPONSABILIDADE: Assumimos 100% da responsabilidade por sobras e faltas.
+- PÚBLICO: Engenheiros, arquitetos e construtoras (90%). Se o lead for pessoa física, seja didático.
+- PRODUTOS: Drywall, Forros, Steel Frame, Pisos, Carpetes.
 
-Responda apenas com o texto final da mensagem para o lead.`;
+### FLUXO DE QUALIFICAÇÃO (SPIN SELLING):
+- Situação: Antes de preço, entenda onde é a obra e qual o estágio dela.
+- Valor: Explique que o orçamento da Agile é técnico e preciso para evitar desperdícios.
+- Próximo Passo: Se qualificado, solicite o projeto ou medidas para o setor de engenharia.
+
+### INSTRUÇÕES DE FORMATAÇÃO:
+- Nome do contato: Use {{leadName}} se soar natural na frase.
+- Idioma: Estilo ${languageStyle}.
+- Limite: Máximo ${this.promptConfig.maxReplyChars} caracteres.
+- Emojis: ${this.promptConfig.emojisEnabled ? 'Use emojis de forma pontual e profissional.' : 'NÃO use emojis.'}
+- PROIBIÇÕES:
+  - Não use parágrafos longos.
+  - Não use "Muitas perguntas" em uma frase.
+  - Não seja robótico.
+
+Customização do Cliente: ${this.promptConfig.customPrompt || 'Nenhuma.'}`;
   }
 
   private fallbackReply(intent: LeadIntent, leadName: string): string {
     const templates: Record<LeadIntent, string> = {
-      BUY_NOW: `Perfeito, ${leadName}! ${this.promptConfig.primaryCTA}`,
-      SUPPORT: `${leadName}, ótima pergunta. Posso explicar de forma objetiva e te mostrar o melhor caminho para o seu caso.`,
-      TRIAGE: `Obrigado pela mensagem, ${leadName}! ${this.promptConfig.qualificationQuestions[0] || 'Qual resultado você quer alcançar agora?'}`
+      BUY_NOW: `Perfeito, ${leadName}! Para eu encaminhar seu projeto para nossa engenharia, você já teria as medidas ou o projeto em mãos?`,
+      SUPPORT: `${leadName}, na Agile Steel nós cuidamos de toda a solução, do material à instalação. Qual desses serviços você está buscando para sua obra?`,
+      TRIAGE: `Olá, ${leadName}! Para eu te dar um direcionamento melhor, qual seria o tipo de obra que você está planejando?`
     };
 
     const selected = templates[intent] || this.promptConfig.fallbackMessage;

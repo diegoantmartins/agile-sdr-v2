@@ -71,6 +71,54 @@ export class ChatwootService {
   }
 
   /**
+   * Adicionar etiquetas em uma conversa via telefone
+   */
+  async addLabels(phone: string, labels: string[]): Promise<boolean> {
+    try {
+      logger.debug('[ChatwootService] Adicionando etiquetas', { phone, labels });
+      
+      const contact = await this.chatClient.getOrCreateContact(phone);
+      const conversation = await this.chatClient.getOrCreateConversation(contact.id);
+      
+      await this.chatClient.addLabels(conversation.id, labels);
+      return true;
+    } catch (error: any) {
+      logger.error('[ChatwootService] Erro ao adicionar etiquetas:', { phone, error: error.message });
+      return false;
+    }
+  }
+
+  /**
+   * Abrir conversa no Chatwoot (mudar status para 'open')
+   */
+  async openConversation(phone: string): Promise<boolean> {
+    try {
+      const contact = await this.chatClient.getOrCreateContact(phone);
+      const conversation = await this.chatClient.getOrCreateConversation(contact.id);
+      await this.chatClient.toggleStatus(conversation.id, 'open');
+      return true;
+    } catch (error: any) {
+      logger.error('[ChatwootService] Erro ao abrir conversa:', { phone, error: error.message });
+      return false;
+    }
+  }
+
+  /**
+   * Adicionar nota privada para a equipe no Chatwoot
+   */
+  async addPrivateNote(phone: string, content: string): Promise<boolean> {
+    try {
+      const contact = await this.chatClient.getOrCreateContact(phone);
+      const conversation = await this.chatClient.getOrCreateConversation(contact.id);
+      await this.chatClient.sendPrivateNote(conversation.id, content);
+      return true;
+    } catch (error: any) {
+      logger.error('[ChatwootService] Erro ao adicionar nota privada:', { phone, error: error.message });
+      return false;
+    }
+  }
+
+  /**
    * Testar conexão com Chatwoot
    */
   async testConnection(): Promise<boolean> {
