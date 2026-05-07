@@ -232,6 +232,11 @@ export function buildAgentConfigPage(): string {
         <label>Prompt customizado <span class="badge optional">opcional</span>
           <textarea id="customPrompt" placeholder="Regras extras do seu negócio..."></textarea>
         </label>
+
+        <label>Template do System Prompt (Core) <span class="badge optional">avançado</span>
+          <p class="hint">Use {{companyName}}, {{businessNiche}}, {{languageStyle}}, {{maxReplyChars}}, {{emojisInstruction}}, {{customPrompt}} como placeholders.</p>
+          <textarea id="systemPromptTemplate" placeholder="Deixe em branco para usar o padrão..."></textarea>
+        </label>
       </section>
 
       <section class="card">
@@ -395,6 +400,7 @@ export function buildAgentConfigPage(): string {
       document.getElementById('primaryCTA').value = data.primaryCTA || '';
       document.getElementById('fallbackMessage').value = data.fallbackMessage || '';
       document.getElementById('customPrompt').value = data.customPrompt || '';
+      document.getElementById('systemPromptTemplate').value = data.systemPromptTemplate || '';
       
       // Lists
       document.getElementById('qualificationQuestions').value = listToTextarea(data.qualificationQuestions);
@@ -426,6 +432,7 @@ export function buildAgentConfigPage(): string {
         primaryCTA: document.getElementById('primaryCTA').value,
         fallbackMessage: document.getElementById('fallbackMessage').value,
         customPrompt: document.getElementById('customPrompt').value,
+        systemPromptTemplate: document.getElementById('systemPromptTemplate').value,
         
         qualificationQuestions: textareaToList(document.getElementById('qualificationQuestions').value),
         disallowedTerms: textareaToList(document.getElementById('disallowedTerms').value),

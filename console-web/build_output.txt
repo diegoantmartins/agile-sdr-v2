@@ -1,0 +1,17 @@
+
+> console-web@0.0.0 build
+> tsc -b && vite build
+
+src/pages/Agente.tsx(23,49): error TS6133: 'Edit' is declared but its value is never read.
+src/pages/Agente.tsx(28,40): error TS6133: 'error' is declared but its value is never read.
+src/pages/Agente.tsx(181,19): error TS2322: Type '{ children: Element[]; select: true; selectProps: { native: boolean; }; value: string; onChange: (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement, Element>) => void; fullWidth: true; }' is not assignable to type 'IntrinsicAttributes & { variant?: TextFieldVariants | undefined; } & Omit<OutlinedTextFieldProps | FilledTextFieldProps | StandardTextFieldProps, "variant">'.
+  Property 'selectProps' does not exist on type 'IntrinsicAttributes & { variant?: TextFieldVariants | undefined; } & Omit<OutlinedTextFieldProps | FilledTextFieldProps | StandardTextFieldProps, "variant">'. Did you mean 'SelectProps'?
+src/pages/Agente.tsx(320,32): error TS2304: Cannot find name 'Psychology'.
+src/pages/Logs.tsx(2,100): error TS6133: 'Tooltip' is declared but its value is never read.
+src/pages/Logs.tsx(3,46): error TS6133: 'ErrorIcon' is declared but its value is never read.
+src/pages/Logs.tsx(3,57): error TS6133: 'Info' is declared but its value is never read.
+src/pages/Logs.tsx(3,63): error TS6133: 'Warning' is declared but its value is never read.
+src/pages/Logs.tsx(3,72): error TS6133: 'ClearAll' is declared but its value is never read.
+src/pages/Simulador.tsx(14,3): error TS6133: 'Alert' is declared but its value is never read.
+src/pages/Simulador.tsx(17,3): error TS6133: 'LinearProgress' is declared but its value is never read.
+src/pages/Simulador.tsx(101,47): error TS6133: 'history' is declared but its value is never read.

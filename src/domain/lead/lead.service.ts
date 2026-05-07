@@ -195,4 +195,41 @@ export class LeadService {
 
     logger.info(`[LeadService] Lead ${phone} arquivado: ${reason}`);
   }
+
+  async createLeadsBulk(tenantId: string, leads: CreateLeadDTO[]): Promise<{ created: number; existing: number }> {
+    let created = 0;
+    let existingCount = 0;
+
+    for (const leadData of leads) {
+      const existing = await this.prisma.activeLead.findUnique({
+        where: {
+          tenant_phone_unique: {
+            tenantId,
+            phone: leadData.phone
+          }
+        }
+      });
+
+      if (existing) {
+        existingCount++;
+        continue;
+      }
+
+      await this.prisma.activeLead.create({
+        data: {
+          tenantId,
+          phone: leadData.phone,
+          name: leadData.name,
+          email: leadData.email,
+          company: leadData.company,
+          source: leadData.source || 'bulk_import',
+          campaignId: leadData.campaignId,
+          metadata: leadData.metadata || {}
+        }
+      });
+      created++;
+    }
+
+    return { created, existing: existingCount };
+  }
 }

@@ -1,0 +1,36 @@
+import { Box, Grid, Card, CardContent, Typography, Button, Chip } from '@mui/material';
+import { WhatsApp, CalendarMonth, Webhook, Link, CheckCircle } from '@mui/icons-material';
+
+const integrations = [
+  { id: '1', name: 'WhatsApp', type: 'whatsapp', status: 'connected', icon: <WhatsApp /> },
+  { id: '2', name: 'Google Calendar', type: 'calendar', status: 'connected', icon: <CalendarMonth /> },
+  { id: '3', name: 'Chatwoot', type: 'chatwoot', status: 'connected', icon: <Webhook /> },
+  { id: '4', name: 'n8n', type: 'n8n', status: 'connected', icon: <Webhook /> },
+  { id: '5', name: 'CRM Salesforce', type: 'crm', status: 'disconnected', icon: <Link /> },
+  { id: '6', name: 'Slack', type: 'slack', status: 'disconnected', icon: <Link /> },
+];
+
+export default function Integracoes() {
+  return (
+    <Box>
+      <Box sx={{ mb: 3 }}><Typography variant="h4" fontWeight={700}>Integrações</Typography><Typography variant="body2" color="text.secondary">Conecte ferramentas externas</Typography></Box>
+      <Grid container spacing={3}>
+        {integrations.map((int) => (
+          <Grid item xs={12} sm={6} md={4} key={int.id}>
+            <Card>
+              <CardContent>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+                  <Box sx={{ width: 48, height: 48, borderRadius: 2, bgcolor: int.status === 'connected' ? '#ECFDF5' : '#F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center', color: int.status === 'connected' ? '#10B981' : '#64748B' }}>{int.icon}</Box>
+                  <Chip size="small" icon={int.status === 'connected' ? <CheckCircle /> : undefined} label={int.status === 'connected' ? 'Conectado' : 'Desconectado'} color={int.status === 'connected' ? 'success' : 'default'} />
+                </Box>
+                <Typography variant="h6" fontWeight={600} mb={0.5}>{int.name}</Typography>
+                <Typography variant="body2" color="text.secondary" mb={2}>{int.status === 'connected' ? 'Configurado e ativo' : 'Clique para conectar'}</Typography>
+                {int.status === 'connected' ? <Button size="small" variant="outlined">Configurar</Button> : <Button variant="contained" fullWidth>Conectar</Button>}
+              </CardContent>
+            </Card>
+          </Grid>
+        ))}
+      </Grid>
+    </Box>
+  );
+}

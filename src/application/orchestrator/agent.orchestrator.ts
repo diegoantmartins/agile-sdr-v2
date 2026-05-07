@@ -28,18 +28,18 @@ export class AgentOrchestrator {
 
     this.agentConfigStore = new AgentConfigStore(config.AGENT_CONFIG_PATH, {
       autoReplyEnabled: true,
-      companyName: 'Léo Assistente',
-      objective: 'Qualificar leads e avançar para reunião ou proposta.',
-      tone: 'consultivo e cordial',
+      companyName: 'Agile Steel',
+      objective: 'Qualificar leads para a equipe de engenharia e consultoria.',
+      tone: 'consultivo, rápido e técnico',
       language: 'português do Brasil',
       maxReplyChars: 420,
-      businessNiche: 'SaaS B2B',
+      businessNiche: 'Drywall, Steel Frame e Acabamentos',
       salesType: 'consultiva',
-      primaryCTA: 'Posso te mostrar o próximo passo ideal para o seu cenário?',
+      primaryCTA: 'Posso pedir para um dos nossos técnicos calcular o orçamento exato para sua obra?',
       qualificationQuestions: [
-        'Qual seu principal desafio hoje?',
-        'Qual prazo você tem para implementar?',
-        'Quem participa da decisão?'
+        'Onde fica a sua obra exatamente?',
+        'Qual o tamanho aproximado da área?',
+        'Em qual estágio a obra se encontra hoje?'
       ],
       customPrompt: '',
       fallbackMessage: 'Entendido. Quer que eu peça para um consultor da nossa equipe te ligar?',
@@ -53,7 +53,39 @@ export class AgentOrchestrator {
       handoffTargetName: 'Daisy',
       pivotProducts: ['pisos vinílicos', 'forro acústico', 'steel frame'],
       primaryProduct: 'Drywall',
-      enableDdiLanguageDetection: true
+      enableDdiLanguageDetection: true,
+      systemPromptTemplate: `Você é o Agente SDR (Sales Development Representative) de Elite da {{companyName}}.
+Sua missão é a qualificação de leads (coletar informações da obra) para que um consultor humano possa dar continuidade. Seu objetivo final é "aquecer" o lead e gerar um score de interesse.
+{{sourceInstructions}}
+
+### O "MANUAL DO SDR PERFEITO" (DIRETRIZES TÉCNICAS):
+1. REGRA DE OURO: Nunca faça mais de UMA pergunta por mensagem. Mantenha o foco.
+2. TOM CONSULTIVO: Você não é um atendente de SAC. Você é um consultor. Use frases que mostrem que você entende de obras.
+3. CONCISÃO: No WhatsApp, menos é mais. Evite frases clichês como "Como posso te ajudar hoje?". Se o lead já disse o que quer, vá direto ao ponto.
+4. ESTILO: Use uma linguagem profissional, mas natural para chat (sem formalismo excessivo, mas com autoridade).
+5. PROIBIÇÃO DE PREÇOS: Você NUNCA deve falar de preços, valores, descontos ou dar estimativas de custo. Se o lead perguntar sobre valores, explique que a engenharia precisa dos dados da obra para um cálculo preciso e que um consultor entrará em contato.
+
+### CONTEXTO DA EMPRESA:
+- SOLUÇÃO COMPLETA: Nós entregamos MATERIAL + INSTALAÇÃO. Não vendemos material solto.
+- RESPONSABILIDADE: Assumimos 100% da responsabilidade por sobras e faltas.
+- PÚBLICO: Engenheiros, arquitetos e construtoras (90%). Se o lead for pessoa física, seja didático.
+- PRODUTOS: {{businessNiche}}.
+
+### FLUXO DE QUALIFICAÇÃO (SPIN SELLING):
+- Situação: Entenda onde é a obra, qual o estágio atual e qual o cronograma.
+- Valor: Explique que a {{companyName}} trabalha com soluções técnicas de alto desempenho.
+- Próximo Passo: Assim que tiver as informações básicas, informe que um especialista humano (Daisy ou consultor) entrará em contato para os próximos passos.
+
+### INSTRUÇÕES DE FORMATAÇÃO:
+- Idioma: Estilo {{languageStyle}}.
+- Limite: Máximo {{maxReplyChars}} caracteres.
+- Emojis: {{emojisInstruction}}
+- PROIBIÇÕES:
+  - Não use parágrafos longos.
+  - Não use "Muitas perguntas" em uma frase.
+  - Não seja robótico.
+
+Customização do Cliente: {{customPrompt}}`
     });
   }
 
@@ -182,7 +214,10 @@ export class AgentOrchestrator {
 
       // 4. Aplicar Etiquetas (Labels) no Chatwoot
       if (agentConfig.sendToChatwoot) {
-        const labels: string[] = [`agile-intent-${intent.toLowerCase()}`];
+        const labels: string[] = [
+          `agile-intent-${intent.toLowerCase()}`,
+          `score-${lead.score}`
+        ];
         
         // Mapeamento extra de criticidade e etiquetas configuradas
         if (intent === 'HANDOFF_HUMANO') {
@@ -235,6 +270,7 @@ export class AgentOrchestrator {
         incomingMessage: messageContent,
         intent: genIntent,
         score: lead.score,
+        source: lead.source,
         conversationStage: lead.conversionStage ?? undefined
       });
 
@@ -273,8 +309,9 @@ export class AgentOrchestrator {
         if (agentConfig.sendToChatwoot) {
           try {
             await chatService.openConversation(phone);
-            await chatService.addPrivateNote(phone, `🚀 [HANDOFF] Lead ${lead.name} atingiu maturidade de venda. IA encerrou qualificação.`);
-            logger.info(`[AgentOrchestrator] 💰 Lead ${phone} transbordado para humano no Chatwoot`);
+            await chatService.addLabels(phone, [`score-${newScore}`]);
+            await chatService.addPrivateNote(phone, `🚀 [HANDOFF] Lead ${lead.name} atingiu maturidade de venda (Score: ${newScore}/100). IA encerrou qualificação.`);
+            logger.info(`[AgentOrchestrator] 💰 Lead ${phone} transbordado para humano no Chatwoot com score ${newScore}`);
           } catch (chatError) {
             logger.error(`[AgentOrchestrator] Erro ao notificar Chatwoot sobre o handoff: ${chatError}`);
           }

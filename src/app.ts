@@ -275,6 +275,29 @@ app.post('/api/leads', async (request, reply) => {
   return reply.status(201).send(lead);
 });
 
+app.post('/api/leads/bulk', async (request, reply) => {
+  const tenantId = resolveTenantId(request);
+  if (!tenantId) {
+    return reply.status(400).send({ error: 'x-tenant-id header required' });
+  }
+
+  const { leads } = request.body as any;
+  if (!Array.isArray(leads)) {
+    return reply.status(400).send({ error: 'leads must be an array' });
+  }
+
+  try {
+    const result = await leadService.createLeadsBulk(tenantId, leads);
+    return reply.status(201).send({
+      message: 'Bulk processing complete',
+      ...result
+    });
+  } catch (error: any) {
+    logger.error({ error, tenantId }, '[BulkLeads] Error processing bulk leads');
+    return reply.status(500).send({ error: error.message || 'Internal server error' });
+  }
+});
+
 app.get('/api/leads/hot', async (request, reply) => {
   const tenantId = resolveTenantId(request);
   if (!tenantId) {
@@ -477,6 +500,91 @@ app.post('/api/commercial/next-action', async (request, reply) => {
     return commercialEngineService.getNextBestAction({ niche, leadStage, intent, score });
   } catch (error: any) {
     return reply.status(400).send({ error: error.message || 'Unable to determine next action' });
+  }
+});
+
+// ======================== API - OUTBOUND (n8n / Cron) ========================
+
+app.post('/api/outbound/send', async (request, reply) => {
+  const tenantId = resolveTenantId(request);
+  if (!tenantId) {
+    return reply.status(400).send({ error: 'x-tenant-id header required' });
+  }
+
+  const { phone, message, campaignTag } = request.body as any;
+  if (!phone || !message) {
+    return reply.status(400).send({ error: 'phone and message are required' });
+  }
+
+  try {
+    // 1. Buscar ou criar lead
+    let lead = await prisma.activeLead.findFirst({
+      where: { tenantId, phone }
+    });
+
+    if (!lead) {
+      lead = await prisma.activeLead.create({
+        data: {
+          tenantId,
+          phone,
+          name: 'Lead Outbound',
+          source: campaignTag || 'PROSPECCAO_OBRAS',
+          status: 'TRIAGE',
+          score: 0
+        }
+      });
+      logger.info({ phone, leadId: lead.id }, '[Outbound] Lead criado automaticamente');
+    }
+
+    // 2. Enviar via WhatsApp (UAZAPI)
+    const sendResult = await uazapiClient.sendMessage({ phone, message });
+
+    // 3. Salvar mensagem outgoing no banco (para a IA ter contexto na resposta)
+    await prisma.message.create({
+      data: {
+        leadId: lead.id,
+        tenantId,
+        direction: 'outgoing',
+        content: message,
+        channel: 'whatsapp',
+        isAiGenerated: false,
+        intentDetected: campaignTag || 'PROSPECCAO_OBRAS'
+      }
+    });
+
+    // 4. Atualizar lead com a data do último contato
+    await prisma.activeLead.update({
+      where: { id: lead.id },
+      data: {
+        lastMessageAt: new Date(),
+        messageCount: { increment: 1 }
+      }
+    });
+
+    // 5. Sync com Chatwoot (não-bloqueante)
+    chatService.syncMessage({
+      phone,
+      name: lead.name || 'Lead',
+      message,
+      messageType: 'outgoing'
+    }).catch(err => logger.warn({ err }, '[Outbound] Falha ao sincronizar com Chatwoot'));
+
+    logger.info({ phone, leadId: lead.id, messageId: sendResult.messageId }, '[Outbound] Mensagem enviada e registrada');
+
+    return reply.status(200).send({
+      success: true,
+      leadId: lead.id,
+      messageId: sendResult.messageId,
+      phone,
+      message: 'Mensagem enviada e registrada no sistema'
+    });
+
+  } catch (error: any) {
+    logger.error({ error, phone, tenantId }, '[Outbound] Erro ao enviar mensagem');
+    return reply.status(503).send({
+      success: false,
+      error: error.message || 'Falha ao enviar mensagem'
+    });
   }
 });
 

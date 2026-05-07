@@ -156,6 +156,7 @@ model ActiveLead {
   updatedAt         DateTime    @updatedAt
   messages          Message[]   @relation("LeadMessages")
   notes             Note[]
+  conversationMetrics ConversationMetric[]
 
   @@unique([tenantId, phone], name: "tenant_phone_unique")
   @@index([tenantId])
@@ -207,6 +208,7 @@ model Note {
 model ConversationMetric {
   id               String   @id @default(uuid())
   leadId           String
+  lead             ActiveLead @relation(fields: [leadId], references: [id], onDelete: Cascade)
   messageCount     Int      @default(0)
   userMessageCount Int      @default(0)
   aiMessageCount   Int      @default(0)

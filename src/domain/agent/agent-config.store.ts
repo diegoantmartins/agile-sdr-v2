@@ -18,6 +18,7 @@ export interface AgentRuntimeConfig {
 
   // Comportamento
   customPrompt: string;
+  systemPromptTemplate?: string;
   fallbackMessage: string;
   emojisEnabled: boolean;
   handoffEnabled: boolean;
@@ -101,6 +102,7 @@ export class AgentConfigStore {
             'Quem participa da decisão?'
           ],
       customPrompt: String(merged.customPrompt || '').trim(),
+      systemPromptTemplate: merged.systemPromptTemplate ? String(merged.systemPromptTemplate).trim() : undefined,
       fallbackMessage: String(merged.fallbackMessage || 'Perfeito! Posso te ajudar com o próximo passo agora.').trim(),
       emojisEnabled: Boolean(merged.emojisEnabled),
       handoffEnabled: Boolean(merged.handoffEnabled),
