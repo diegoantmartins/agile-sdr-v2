@@ -18,15 +18,38 @@ import {
   IconButton,
   Alert,
   CircularProgress,
+  Divider,
+  Paper,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Chip,
 } from '@mui/material';
-import { Save, History, Add, Delete } from '@mui/icons-material';
-import { useAgentConfig, useUpdateAgentConfig } from '../hooks/useApi';
+import { Save, History, Add, Delete, Edit, MenuBook } from '@mui/icons-material';
+import { 
+  useAgentConfig, 
+  useUpdateAgentConfig, 
+  useKnowledge, 
+  useCreateKnowledge, 
+  useUpdateKnowledge, 
+  useDeleteKnowledge 
+} from '../hooks/useApi';
 
 export default function Agente() {
   const [tab, setTab] = useState(0);
-  const { data: configData, isLoading } = useAgentConfig();
+  const { data: configData, isLoading: isConfigLoading } = useAgentConfig();
   const updateConfig = useUpdateAgentConfig();
   
+  const { data: knowledge, isLoading: isKnowledgeLoading } = useKnowledge();
+  const createKnowledge = useCreateKnowledge();
+  const updateKnowledge = useUpdateKnowledge();
+  const deleteKnowledge = useDeleteKnowledge();
+
+  const [openKnowledgeDialog, setOpenKnowledgeDialog] = useState(false);
+  const [editingKnowledge, setEditingKnowledge] = useState<any>(null);
+  const [knowledgeForm, setKnowledgeForm] = useState({ title: '', content: '', category: 'Produto' });
+
   const [config, setConfig] = useState({
     companyName: 'Agile Steel',
     primaryCTA: 'Posso pedir para um dos nossos técnicos calcular o orçamento exato para sua obra?',
@@ -71,7 +94,28 @@ export default function Agente() {
     }
   };
 
-  if (isLoading) {
+  const handleKnowledgeSubmit = async () => {
+    try {
+      if (editingKnowledge) {
+        await updateKnowledge.mutateAsync({ id: editingKnowledge.id, data: knowledgeForm });
+      } else {
+        await createKnowledge.mutateAsync(knowledgeForm);
+      }
+      setOpenKnowledgeDialog(false);
+      setEditingKnowledge(null);
+      setKnowledgeForm({ title: '', content: '', category: 'Produto' });
+    } catch (err) {
+      console.error('Failed to save knowledge:', err);
+    }
+  };
+
+  const handleEditKnowledge = (k: any) => {
+    setEditingKnowledge(k);
+    setKnowledgeForm({ title: k.title, content: k.content, category: k.category });
+    setOpenKnowledgeDialog(true);
+  };
+
+  if (isConfigLoading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
         <CircularProgress />
@@ -84,7 +128,7 @@ export default function Agente() {
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Box>
           <Typography variant="h4" fontWeight={700}>Agente IA</Typography>
-          <Typography variant="body2" color="text.secondary">Configure o comportamento do seu agente</Typography>
+          <Typography variant="body2" color="text.secondary">Configure o comportamento e conhecimento do seu agente</Typography>
         </Box>
         <Box sx={{ display: 'flex', gap: 1 }}>
           <Button variant="outlined" startIcon={<History />}>Versões</Button>
@@ -94,26 +138,24 @@ export default function Agente() {
             onClick={handleSave}
             disabled={updateConfig.isPending}
           >
-            {updateConfig.isPending ? 'Salvando...' : 'Salvar'}
+            {updateConfig.isPending ? 'Salvando...' : 'Salvar Configurações'}
           </Button>
         </Box>
       </Box>
 
-      {updateConfig.isSuccess && (
+      {(updateConfig.isSuccess) && (
         <Alert severity="success" sx={{ mb: 2 }}>Configuração salva com sucesso!</Alert>
-      )}
-      {updateConfig.isError && (
-        <Alert severity="error" sx={{ mb: 2 }}>Erro ao salvar configuração</Alert>
       )}
 
       <Card>
         <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ borderBottom: 1, borderColor: 'divider', px: 2 }}>
           <Tab label="Prompt & Personalidade" />
+          <Tab label="Base de Conhecimento" />
           <Tab label="Comportamento" />
-          <Tab label="Follow-ups" />
+          <Tab label="Qualificação" />
         </Tabs>
 
-        <CardContent>
+        <CardContent sx={{ p: 4 }}>
           {tab === 0 && (
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
               <TextField 
@@ -152,12 +194,69 @@ export default function Agente() {
                 multiline 
                 rows={12} 
                 fullWidth 
-                helperText="Template base do comportamento do agente (Avançado)"
+                helperText="Template base do comportamento do agente (Avançado). Use {{knowledgeBase}} para inserir o conhecimento."
               />
             </Box>
           )}
 
           {tab === 1 && (
+            <Box>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <MenuBook color="primary" />
+                  <Typography variant="h6">Itens de Conhecimento</Typography>
+                </Box>
+                <Button 
+                  variant="contained" 
+                  color="primary" 
+                  startIcon={<Add />}
+                  onClick={() => {
+                    setEditingKnowledge(null);
+                    setKnowledgeForm({ title: '', content: '', category: 'Produto' });
+                    setOpenKnowledgeDialog(true);
+                  }}
+                >
+                  Novo Item
+                </Button>
+              </Box>
+
+              {isKnowledgeLoading ? (
+                <CircularProgress />
+              ) : (
+                <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 2 }}>
+                  {knowledge?.map((k) => (
+                    <Card key={k.id} variant="outlined" sx={{ bgcolor: 'rgba(255,255,255,0.02)' }}>
+                      <CardContent>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                          <Chip label={k.category} size="small" color="primary" variant="outlined" />
+                          <Box>
+                            <IconButton size="small" onClick={() => handleEditKnowledge(k)}><Edit fontSize="small" /></IconButton>
+                            <IconButton size="small" color="error" onClick={() => deleteKnowledge.mutate(k.id)}><Delete fontSize="small" /></IconButton>
+                          </Box>
+                        </Box>
+                        <Typography variant="subtitle1" fontWeight={600}>{k.title}</Typography>
+                        <Typography variant="body2" color="text.secondary" sx={{ 
+                          display: '-webkit-box', 
+                          WebkitLineClamp: 3, 
+                          WebkitBoxOrient: 'vertical', 
+                          overflow: 'hidden' 
+                        }}>
+                          {k.content}
+                        </Typography>
+                      </CardContent>
+                    </Card>
+                  ))}
+                  {knowledge?.length === 0 && (
+                    <Typography color="text.secondary" sx={{ gridColumn: '1/-1', textAlign: 'center', py: 4 }}>
+                      Nenhum item de conhecimento cadastrado.
+                    </Typography>
+                  )}
+                </Box>
+              )}
+            </Box>
+          )}
+
+          {tab === 2 && (
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
               <FormControlLabel 
                 control={
@@ -200,7 +299,7 @@ export default function Agente() {
             </Box>
           )}
 
-          {tab === 2 && (
+          {tab === 3 && (
             <Box>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
                 <Typography variant="subtitle2" fontWeight={600}>Perguntas de Qualificação</Typography>
@@ -257,6 +356,44 @@ export default function Agente() {
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={openKnowledgeDialog} onClose={() => setOpenKnowledgeDialog(false)} fullWidth maxWidth="sm">
+        <DialogTitle>{editingKnowledge ? 'Editar Conhecimento' : 'Novo Item de Conhecimento'}</DialogTitle>
+        <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 2 }}>
+          <TextField 
+            label="Título/Assunto" 
+            fullWidth 
+            value={knowledgeForm.title} 
+            onChange={(e) => setKnowledgeForm({...knowledgeForm, title: e.target.value})}
+          />
+          <TextField 
+            label="Categoria" 
+            select 
+            SelectProps={{ native: true }}
+            fullWidth 
+            value={knowledgeForm.category} 
+            onChange={(e) => setKnowledgeForm({...knowledgeForm, category: e.target.value})}
+          >
+            <option value="Produto">Produto</option>
+            <option value="Empresa">Empresa</option>
+            <option value="Serviço">Serviço</option>
+            <option value="FAQ">FAQ</option>
+          </TextField>
+          <TextField 
+            label="Conteúdo/Descrição" 
+            fullWidth 
+            multiline 
+            rows={6} 
+            value={knowledgeForm.content} 
+            onChange={(e) => setKnowledgeForm({...knowledgeForm, content: e.target.value})}
+            helperText="Detalhes que o agente usará para responder."
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenKnowledgeDialog(false)}>Cancelar</Button>
+          <Button variant="contained" onClick={handleKnowledgeSubmit}>Salvar</Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

@@ -34,6 +34,7 @@ export interface GenerateReplyInput {
   source?: string | null;
   conversationStage?: string | null;
   history?: ChatMessage[];
+  knowledgeContext?: string;
 }
 
 export class ResponseGenerator {
@@ -49,7 +50,7 @@ export class ResponseGenerator {
 
   async generateReply(input: GenerateReplyInput): Promise<string> {
     const languageStyle = this.detectLanguageStyle(input.phone);
-    const systemPrompt = this.buildSystemPrompt(languageStyle, input.source);
+    const systemPrompt = this.buildSystemPrompt(languageStyle, input.source, input.knowledgeContext);
 
     const messages: ChatMessage[] = [
       { role: 'system', content: systemPrompt }
@@ -97,7 +98,7 @@ export class ResponseGenerator {
     return 'Português do Brasil (PT-BR)';
   }
 
-  private buildSystemPrompt(languageStyle: string, source?: string | null): string {
+  private buildSystemPrompt(languageStyle: string, source?: string | null, knowledgeContext?: string): string {
     let sourceInstructions = '';
     if (source === 'PROSPECCAO_OBRAS') {
       sourceInstructions = `
@@ -113,6 +114,9 @@ Seja proativo e mostre entusiasmo com o projeto dele.`;
     const defaultTemplate = `Você é o Agente SDR (Sales Development Representative) de Elite da {{companyName}}.
 Sua missão é a qualificação de leads (coletar informações da obra) para que um consultor humano possa dar continuidade. Seu objetivo final é "aquecer" o lead e gerar um score de interesse.
 {{sourceInstructions}}
+
+### BASE DE CONHECIMENTO (PRODUTOS E SERVIÇOS):
+{{knowledgeBase}}
 
 ### O "MANUAL DO SDR PERFEITO" (DIRETRIZES TÉCNICAS):
 1. REGRA DE OURO: Nunca faça mais de UMA pergunta por mensagem. Mantenha o foco.
@@ -153,6 +157,7 @@ Customização do Cliente: {{customPrompt}}`;
       .replace(/{{languageStyle}}/g, languageStyle)
       .replace(/{{maxReplyChars}}/g, String(this.promptConfig.maxReplyChars))
       .replace(/{{emojisInstruction}}/g, emojisInstruction)
+      .replace(/{{knowledgeBase}}/g, knowledgeContext || 'Consulte o catálogo geral se necessário.')
       .replace(/{{customPrompt}}/g, this.promptConfig.customPrompt || 'Nenhuma.');
   }
 

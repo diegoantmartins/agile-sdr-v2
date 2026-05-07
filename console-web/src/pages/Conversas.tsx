@@ -41,14 +41,20 @@ export default function Conversas() {
   }
 
   return (
-    <Box sx={{ height: 'calc(100vh - 100px)', display: 'flex', flexDirection: 'column' }}>
+    <Box sx={{ height: 'calc(100vh - 120px)', display: 'flex', flexDirection: 'column' }}>
       <Box sx={{ mb: 2 }}>
-        <Typography variant="h4" fontWeight={700}>Central de Conversas</Typography>
+        <Typography variant="h4" fontWeight={700} sx={{ fontSize: { xs: '1.5rem', sm: '2.125rem' } }}>Central de Conversas</Typography>
         <Typography variant="body2" color="text.secondary">Gerencie todas as conversas do seu agente</Typography>
       </Box>
 
-      <Card sx={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
-        <Box sx={{ width: 350, borderRight: '1px solid #E2E8F0', display: 'flex', flexDirection: 'column' }}>
+      <Card sx={{ flex: 1, display: 'flex', overflow: 'hidden', position: 'relative' }}>
+        {/* Sidebar contatos - oculta em mobile se houver conversa selecionada */}
+        <Box sx={{ 
+          width: { xs: '100%', md: 350 }, 
+          display: { xs: selectedPhone ? 'none' : 'flex', md: 'flex' },
+          borderRight: '1px solid #E2E8F0', 
+          flexDirection: 'column' 
+        }}>
           <Box sx={{ p: 2, borderBottom: '1px solid #E2E8F0' }}>
             <ToggleButtonGroup value={filter} exclusive onChange={(_, v) => v && setFilter(v)} size="small" fullWidth>
               <ToggleButton value="all">Todas</ToggleButton>
@@ -79,50 +85,43 @@ export default function Conversas() {
                   </ListItemButton>
                 </ListItem>
               ))}
-              {filtered.length === 0 && (
-                <Box sx={{ p: 2, textAlign: 'center', color: 'text.secondary' }}>
-                  <Typography variant="body2">Nenhuma conversa encontrada</Typography>
-                </Box>
-              )}
             </List>
           )}
         </Box>
 
-        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+        {/* Chat - oculta em mobile se não houver conversa selecionada */}
+        <Box sx={{ 
+          flex: 1, 
+          display: { xs: selectedPhone ? 'flex' : 'none', md: 'flex' },
+          flexDirection: 'column' 
+        }}>
           {selected ? (
             <>
               <Box sx={{ p: 2, borderBottom: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                  <Avatar sx={{ bgcolor: 'primary.main' }}>{selected.lead.name.charAt(0)}</Avatar>
+                  <IconButton sx={{ display: { md: 'none' }, ml: -1 }} onClick={() => setSelectedPhone('')}>
+                    <Send sx={{ transform: 'rotate(180deg)' }} />
+                  </IconButton>
+                  <Avatar sx={{ bgcolor: 'primary.main', width: 32, height: 32 }}>{selected.lead.name.charAt(0)}</Avatar>
                   <Box>
-                    <Typography variant="body1" fontWeight={600}>{selected.lead.name}</Typography>
+                    <Typography variant="body2" fontWeight={600}>{selected.lead.name}</Typography>
                     <Typography variant="caption" color="text.secondary">{selected.lead.phone}</Typography>
                   </Box>
                 </Box>
-                <Box sx={{ display: 'flex', gap: 1 }}>
-                  <Button variant="outlined" size="small" startIcon={<Person />}>Assumir</Button>
-                </Box>
+                <Button variant="outlined" size="small" sx={{ display: { xs: 'none', sm: 'inline-flex' } }}>Assumir</Button>
               </Box>
 
               <Box sx={{ flex: 1, p: 2, overflow: 'auto', bgcolor: '#F8FAFC' }}>
-                {selected.messages.length === 0 ? (
-                  <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', color: 'text.secondary' }}>
-                    <Typography variant="body2">Nenhuma mensagem nesta conversa</Typography>
-                  </Box>
-                ) : (
-                  selected.messages.map((msg, idx) => (
-                    <Box key={idx} sx={{ display: 'flex', flexDirection: 'column', alignItems: msg.direction === 'incoming' ? 'flex-start' : 'flex-end', mb: 2 }}>
-                      <Box sx={{ maxWidth: '70%', p: 2, borderRadius: 2, bgcolor: msg.direction === 'incoming' ? 'white' : 'primary.main', color: msg.direction === 'incoming' ? 'text.primary' : 'white', boxShadow: 1 }}>
-                        <Typography variant="body2">{msg.content}</Typography>
-                      </Box>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
-                        {msg.isAiGenerated && <Chip size="small" icon={<SmartToy />} label="IA" sx={{ height: 18, fontSize: '0.65rem' }} />}
-                        {msg.intentDetected && <Chip size="small" label={msg.intentDetected} sx={{ height: 18, fontSize: '0.65rem', bgcolor: '#E0E7FF', color: '#4338CA' }} />}
-                        <Typography variant="caption" color="text.secondary">{new Date(msg.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</Typography>
-                      </Box>
+                {selected.messages.map((msg, idx) => (
+                  <Box key={idx} sx={{ display: 'flex', flexDirection: 'column', alignItems: msg.direction === 'incoming' ? 'flex-start' : 'flex-end', mb: 2 }}>
+                    <Box sx={{ maxWidth: '85%', p: 2, borderRadius: 2, bgcolor: msg.direction === 'incoming' ? 'white' : 'primary.main', color: msg.direction === 'incoming' ? 'text.primary' : 'white', boxShadow: 1 }}>
+                      <Typography variant="body2">{msg.content}</Typography>
                     </Box>
-                  ))
-                )}
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+                      <Typography variant="caption" color="text.secondary">{new Date(msg.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</Typography>
+                    </Box>
+                  </Box>
+                ))}
               </Box>
 
               <Box sx={{ p: 2, borderTop: '1px solid #E2E8F0', bgcolor: 'white' }}>
@@ -139,39 +138,27 @@ export default function Conversas() {
           )}
         </Box>
 
-        <Box sx={{ width: 280, borderLeft: '1px solid #E2E8F0', p: 2, overflow: 'auto' }}>
+        {/* Info - apenas em Desktop */}
+        <Box sx={{ 
+          width: 280, 
+          display: { xs: 'none', lg: 'block' },
+          borderLeft: '1px solid #E2E8F0', 
+          p: 2, 
+          overflow: 'auto' 
+        }}>
           <Typography variant="subtitle2" fontWeight={600} mb={2}>Informações do Lead</Typography>
           {selected && (
             <>
               <Box sx={{ mb: 2 }}><Typography variant="caption" color="text.secondary">Nome</Typography><Typography variant="body2" fontWeight={600}>{selected.lead.name}</Typography></Box>
               <Box sx={{ mb: 2 }}><Typography variant="caption" color="text.secondary">Telefone</Typography><Typography variant="body2">{selected.lead.phone}</Typography></Box>
-              <Box sx={{ mb: 2 }}><Typography variant="caption" color="text.secondary">Temperatura</Typography>
-                <Box sx={{ display: 'flex', gap: 0.5, mt: 0.5 }}>
-                  {(['cold', 'warm', 'hot'] as const).map((t) => (
-                    <Box key={t} sx={{ width: 24, height: 24, borderRadius: 1, bgcolor: selected.lead.temperature === t ? temperatureColors[t] : '#E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'center', color: selected.lead.temperature === t ? 'white' : 'text.secondary', fontSize: '0.7rem' }}>
-                      {t === 'cold' ? '❄' : t === 'warm' ? '🌡' : '🔥'}
-                    </Box>
-                  ))}
-                </Box>
-              </Box>
-              <Box sx={{ mb: 2 }}><Typography variant="caption" color="text.secondary">Tags</Typography>
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
-                  {selected.lead.source && <Chip size="small" label={selected.lead.source} sx={{ fontSize: '0.7rem' }} />}
-                  <Chip size="small" label="+ adicionar" variant="outlined" sx={{ fontSize: '0.7rem' }} />
-                </Box>
-              </Box>
               <Divider sx={{ my: 2 }} />
               <Typography variant="subtitle2" fontWeight={600} mb={2}>Decisões da IA</Typography>
-              {selected.messages.some(m => m.intentDetected) ? (
-                selected.messages.filter(m => m.intentDetected).slice(0, 3).map((msg, idx) => (
-                  <Box key={idx} sx={{ bgcolor: '#F0F9FF', borderRadius: 1, p: 1.5, mb: 1 }}>
-                    <Typography variant="caption" color="#0369A1" fontWeight={600}>{msg.intentDetected}</Typography>
-                    <Typography variant="body2" color="#075985" fontSize="0.8rem">{msg.content.substring(0, 50)}...</Typography>
-                  </Box>
-                ))
-              ) : (
-                <Typography variant="body2" color="text.secondary">Nenhuma intenção detectada</Typography>
-              )}
+              {selected.messages.filter(m => m.intentDetected).slice(0, 3).map((msg, idx) => (
+                <Box key={idx} sx={{ bgcolor: '#F0F9FF', borderRadius: 1, p: 1.5, mb: 1 }}>
+                  <Typography variant="caption" color="#0369A1" fontWeight={600}>{msg.intentDetected}</Typography>
+                  <Typography variant="body2" color="#075985" fontSize="0.8rem">{msg.content.substring(0, 50)}...</Typography>
+                </Box>
+              ))}
             </>
           )}
         </Box>

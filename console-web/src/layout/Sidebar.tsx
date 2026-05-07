@@ -37,23 +37,37 @@ const menuItems = [
   { path: '/logs', label: 'Logs de Sistema', icon: <Terminal /> },
 ];
 
-export default function Sidebar() {
+interface SidebarProps {
+  onClose?: () => void;
+}
+
+export default function Sidebar({ onClose }: SidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
+
+  const handleNavigation = (path: string) => {
+    navigate(path);
+    if (onClose) onClose();
+  };
 
   return (
     <Box
       sx={{
-        width: 280,
+        width: { xs: '100%', md: 280 },
         height: '100vh',
         bgcolor: '#0A0E17',
         color: 'white',
-        position: 'fixed',
-        left: 0,
-        top: 0,
         display: 'flex',
         flexDirection: 'column',
         borderRight: '1px solid rgba(255, 255, 255, 0.05)',
+        overflowY: 'auto',
+        '&::-webkit-scrollbar': {
+          width: '4px',
+        },
+        '&::-webkit-scrollbar-thumb': {
+          bgcolor: 'rgba(255, 255, 255, 0.1)',
+          borderRadius: '10px',
+        },
       }}
     >
       <Box sx={{ 
@@ -61,26 +75,28 @@ export default function Sidebar() {
         pb: 3,
         display: 'flex', 
         alignItems: 'center', 
-        gap: 2,
+        justifyContent: 'space-between',
         cursor: 'pointer'
-      }} onClick={() => navigate('/')}>
-        <Box 
-          component="img" 
-          src={logo} 
-          sx={{ 
-            width: 44, 
-            height: 44, 
-            borderRadius: 1.5,
-            filter: 'drop-shadow(0 0 10px rgba(59, 130, 246, 0.4))'
-          }} 
-        />
-        <Box>
-          <Typography variant="h5" fontWeight={900} sx={{ color: '#F9FAFB', lineHeight: 1, letterSpacing: '-0.03em' }}>
-            Synapsea
-          </Typography>
-          <Typography variant="caption" sx={{ color: 'primary.main', fontWeight: 800, letterSpacing: 3, fontSize: '0.6rem' }}>
-            CORE
-          </Typography>
+      }} onClick={() => handleNavigation('/')}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Box 
+            component="img" 
+            src={logo} 
+            sx={{ 
+              width: 44, 
+              height: 44, 
+              borderRadius: 1.5,
+              filter: 'drop-shadow(0 0 10px rgba(59, 130, 246, 0.4))'
+            }} 
+          />
+          <Box>
+            <Typography variant="h5" fontWeight={900} sx={{ color: '#F9FAFB', lineHeight: 1, letterSpacing: '-0.03em' }}>
+              Synapsea
+            </Typography>
+            <Typography variant="caption" sx={{ color: 'primary.main', fontWeight: 800, letterSpacing: 3, fontSize: '0.6rem' }}>
+              CORE
+            </Typography>
+          </Box>
         </Box>
       </Box>
 
@@ -90,11 +106,11 @@ export default function Sidebar() {
           return (
             <ListItem key={item.path} disablePadding sx={{ mb: 0.5 }}>
               <ListItemButton
-                onClick={() => navigate(item.path)}
+                onClick={() => handleNavigation(item.path)}
                 selected={isActive}
                 sx={{
                   borderRadius: 2,
-                  py: 1.2,
+                  py: 1,
                   px: 2,
                   '&.Mui-selected': {
                     bgcolor: 'rgba(59, 130, 246, 0.12)',
@@ -125,12 +141,12 @@ export default function Sidebar() {
         })}
       </List>
 
-      <Box sx={{ p: 2, mt: 'auto' }}>
+      <Box sx={{ p: 2, mt: 'auto', mb: 2 }}>
         <Box sx={{ 
           background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.05) 100%)', 
           border: '1px solid rgba(16, 185, 129, 0.2)', 
           borderRadius: 3, 
-          p: 2.5,
+          p: 2,
           position: 'relative',
           overflow: 'hidden'
         }}>
@@ -138,8 +154,8 @@ export default function Sidebar() {
             <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: '#10B981', boxShadow: '0 0 8px #10B981' }} />
             MODO ATIVO
           </Typography>
-          <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.75rem', mt: 1, lineHeight: 1.4 }}>
-            Arquitetura Neural em processamento contínuo.
+          <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.7rem', mt: 0.5, lineHeight: 1.2 }}>
+            SDR Agile pronto para operar.
           </Typography>
         </Box>
       </Box>

@@ -5,6 +5,8 @@ import {
   opportunitiesService,
   agentConfigService,
   messagesService,
+  knowledgeService,
+  Knowledge,
   api,
 } from '../services/api';
 
@@ -15,7 +17,46 @@ export const queryKeys = {
   opportunities: ['opportunities'] as const,
   messages: ['messages'] as const,
   agentConfig: ['agentConfig'] as const,
+  knowledge: ['knowledge'] as const,
 };
+
+export function useKnowledge() {
+  return useQuery({
+    queryKey: queryKeys.knowledge,
+    queryFn: knowledgeService.getAll,
+  });
+}
+
+export function useCreateKnowledge() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: knowledgeService.create,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.knowledge });
+    },
+  });
+}
+
+export function useUpdateKnowledge() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<Knowledge> }) =>
+      knowledgeService.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.knowledge });
+    },
+  });
+}
+
+export function useDeleteKnowledge() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: knowledgeService.delete,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.knowledge });
+    },
+  });
+}
 
 export function useDashboard() {
   return useQuery({

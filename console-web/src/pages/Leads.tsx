@@ -119,25 +119,40 @@ export default function Leads() {
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+      <Box sx={{ 
+        display: 'flex', 
+        flexDirection: { xs: 'column', md: 'row' },
+        justifyContent: 'space-between', 
+        alignItems: { xs: 'flex-start', md: 'center' }, 
+        mb: 3,
+        gap: 2
+      }}>
         <Box>
-          <Typography variant="h4" fontWeight={700}>Gestão de Leads</Typography>
+          <Typography variant="h4" fontWeight={700} sx={{ fontSize: { xs: '1.5rem', sm: '2.125rem' } }}>Gestão de Leads</Typography>
           <Typography variant="body2" color="text.secondary">Acompanhe e gerencie todos os seus leads</Typography>
         </Box>
-        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+        <Box sx={{ 
+          display: 'flex', 
+          flexDirection: { xs: 'column', sm: 'row' },
+          gap: 2, 
+          alignItems: { xs: 'stretch', sm: 'center' },
+          width: { xs: '100%', md: 'auto' }
+        }}>
           <TextField 
             size="small" 
             placeholder="Buscar lead..." 
             value={search} 
             onChange={(e) => setSearch(e.target.value)} 
             InputProps={{ startAdornment: <InputAdornment position="start"><Search color="action" /></InputAdornment> }} 
-            sx={{ width: 250 }} 
+            sx={{ width: { xs: '100%', sm: 250 } }} 
           />
-          <ToggleButtonGroup value={view} exclusive onChange={(_, v) => v && setView(v)} size="small">
-            <ToggleButton value="kanban"><ViewKanban /></ToggleButton>
-            <ToggleButton value="list"><ViewList /></ToggleButton>
-          </ToggleButtonGroup>
-          <Button variant="contained" startIcon={<Add />} onClick={() => setDialogOpen(true)}>Novo Lead</Button>
+          <Box sx={{ display: 'flex', gap: 2, justifyContent: 'space-between' }}>
+            <ToggleButtonGroup value={view} exclusive onChange={(_, v) => v && setView(v)} size="small">
+              <ToggleButton value="kanban"><ViewKanban /></ToggleButton>
+              <ToggleButton value="list"><ViewList /></ToggleButton>
+            </ToggleButtonGroup>
+            <Button variant="contained" startIcon={<Add />} onClick={() => setDialogOpen(true)} fullWidth={false}>Novo</Button>
+          </Box>
         </Box>
       </Box>
 
