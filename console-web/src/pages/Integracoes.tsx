@@ -8,6 +8,7 @@ const integrations = [
   { id: '4', name: 'n8n', type: 'n8n', status: 'connected', icon: <Webhook /> },
   { id: '5', name: 'CRM Salesforce', type: 'crm', status: 'disconnected', icon: <Link /> },
   { id: '6', name: 'Slack', type: 'slack', status: 'disconnected', icon: <Link /> },
+  { id: '7', name: 'RD Station', type: 'rd_station', status: 'disconnected', icon: <Webhook /> },
 ];
 
 export default function Integracoes() {
@@ -25,7 +26,10 @@ export default function Integracoes() {
                 </Box>
                 <Typography variant="h6" fontWeight={600} mb={0.5}>{int.name}</Typography>
                 <Typography variant="body2" color="text.secondary" mb={2}>{int.status === 'connected' ? 'Configurado e ativo' : 'Clique para conectar'}</Typography>
-                {int.status === 'connected' ? <Button size="small" variant="outlined">Configurar</Button> : <Button variant="contained" fullWidth>Conectar</Button>}
+                {int.status === 'connected' ? 
+                  <Button size="small" variant="outlined" onClick={() => alert('Configurações ativas no .env')}>Configurar</Button> : 
+                  <Button variant="contained" fullWidth onClick={() => alert(`Para conectar ${int.name}, adicione as chaves de API correspondentes no arquivo .env do servidor.`)}>Conectar</Button>
+                }
               </CardContent>
             </Card>
           </Grid>

@@ -57,6 +57,10 @@ export class IntegrationHubService {
           return await this.handleMeta(provider, action, payload);
         case 'generic_http':
           return await this.handleGenericHttp(action, payload);
+        case 'salesforce':
+          return await this.handleSalesforce(action, payload);
+        case 'slack':
+          return await this.handleSlack(action, payload);
         default:
           throw new ValidationError(`Provider não suportado: ${provider}`);
       }
@@ -175,6 +179,43 @@ export class IntegrationHubService {
       action,
       data: response.data
     };
+  }
+
+  private async handleSalesforce(action: IntegrationAction, payload: Record<string, any>): Promise<IntegrationResult> {
+    if (!config.SALESFORCE_API_URL || !config.SALESFORCE_TOKEN) {
+      throw new ValidationError('SALESFORCE_API_URL/SALESFORCE_TOKEN não configurados');
+    }
+
+    if (action === 'upsert_lead') {
+      const response = await axios.post(`${config.SALESFORCE_API_URL}/services/data/v60.0/sobjects/Lead`, payload, {
+        headers: { Authorization: `Bearer ${config.SALESFORCE_TOKEN}` },
+        timeout: 15000
+      });
+      return { success: true, provider: 'salesforce', action, data: response.data };
+    }
+
+    return this.handleGenericAuthorizedRequest('salesforce', action, payload, config.SALESFORCE_API_URL, config.SALESFORCE_TOKEN);
+  }
+
+  private async handleSlack(action: IntegrationAction, payload: Record<string, any>): Promise<IntegrationResult> {
+    if (!config.SLACK_WEBHOOK_URL) {
+      throw new ValidationError('SLACK_WEBHOOK_URL não configurado');
+    }
+
+    if (action === 'send_message') {
+      // Slack usually expects { text: "..." }
+      const response = await axios.post(config.SLACK_WEBHOOK_URL, payload, {
+        timeout: 15000
+      });
+      return { success: true, provider: 'slack', action, data: response.data };
+    }
+
+    if (!config.SLACK_BOT_TOKEN) {
+       throw new ValidationError('SLACK_BOT_TOKEN não configurado para custom_request');
+    }
+    
+    // Slack base url for API is https://slack.com/api
+    return this.handleGenericAuthorizedRequest('slack', action, payload, 'https://slack.com/api', config.SLACK_BOT_TOKEN);
   }
 
   private async handleGenericAuthorizedRequest(

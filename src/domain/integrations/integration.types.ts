@@ -6,6 +6,8 @@ export type IntegrationProvider =
   | 'facebook'
   | 'meta_api'
   | 'rd_station'
+  | 'salesforce'
+  | 'slack'
   | 'generic_http';
 
 export type IntegrationAction =
@@ -38,5 +40,7 @@ export const PROVIDER_CAPABILITIES: Record<IntegrationProvider, IntegrationActio
   facebook: ['send_message', 'custom_request'],
   meta_api: ['send_message', 'upsert_lead', 'custom_request'],
   rd_station: ['upsert_lead', 'custom_request'],
+  salesforce: ['upsert_lead', 'custom_request'],
+  slack: ['send_message', 'custom_request'],
   generic_http: ['custom_request']
 };

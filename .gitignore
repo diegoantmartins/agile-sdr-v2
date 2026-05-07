@@ -13,3 +13,7 @@ logs/
 coverage/
 .nyc_output/
 .prisma/
+docker_data/
+.npm/
+.cache/
+.temp/

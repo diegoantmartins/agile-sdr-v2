@@ -44,6 +44,10 @@ const envSchema = z.object({
   RD_STATION_TOKEN: z.string().optional(),
   META_API_URL: z.string().optional(),
   META_API_TOKEN: z.string().optional(),
+  SALESFORCE_API_URL: z.string().optional(),
+  SALESFORCE_TOKEN: z.string().optional(),
+  SLACK_WEBHOOK_URL: z.string().optional(),
+  SLACK_BOT_TOKEN: z.string().optional(),
 
   // Admin Console
   ADMIN_CONFIG_TOKEN: z.string().optional(),
