@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Box, Grid, Card, CardContent, Typography, Chip, IconButton, Select, MenuItem, FormControl, Alert, Avatar, Divider, List, ListItem, ListItemAvatar, ListItemText } from '@mui/material';
-import { TrendingUp, TrendingDown, People, CalendarMonth, ArrowForward, Send, AutoAwesome, SmartToy } from '@mui/icons-material';
+import { Box, Grid, Card, CardContent, Typography, Chip, IconButton, Select, MenuItem, FormControl, Alert, Avatar, Divider, List, ListItem, ListItemAvatar, ListItemText, Button } from '@mui/material';
+import { TrendingUp, TrendingDown, People, CalendarMonth, ArrowForward, Send, AutoAwesome, SmartToy, Terminal } from '@mui/icons-material';
+import { useNavigate } from 'react-router-dom';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { useDashboard, useHotLeads, useHealthCheck } from '../hooks/useApi';
 import { useAuth } from '../context/AuthContext';
@@ -30,7 +31,7 @@ function MetricCard({ title, value, subtitle, change, icon, color = 'rgba(59, 13
   const isPositive = change !== undefined && change > 0;
   
   return (
-    <Card sx={{ height: '100%', transition: 'transform 0.2s', '&:hover': { transform: 'translateY(-4px)' } }}>
+    <Card className="hover-lift stagger-entrance" sx={{ height: '100%' }}>
       <CardContent sx={{ p: '24px !important' }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
           <Box sx={{ 
@@ -70,6 +71,7 @@ function MetricCard({ title, value, subtitle, change, icon, color = 'rgba(59, 13
 
 export default function Dashboard() {
   const [period, setPeriod] = useState('7d');
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { data: stats, error: statsError } = useDashboard();
   const { data: hotLeads } = useHotLeads();
@@ -116,6 +118,23 @@ export default function Dashboard() {
               sx={{ fontWeight: 600 }}
             />
           )}
+          <Button 
+            variant="outlined" 
+            startIcon={<Terminal />} 
+            onClick={() => navigate('/logs')}
+            sx={{ 
+              borderRadius: 2, 
+              borderColor: 'rgba(255,255,255,0.1)',
+              color: 'primary.light',
+              px: 2,
+              '&:hover': {
+                bgcolor: 'rgba(59, 130, 246, 0.05)',
+                borderColor: 'primary.main'
+              }
+            }}
+          >
+            Logs
+          </Button>
           <FormControl size="small" sx={{ minWidth: 120 }}>
             <Select value={period} onChange={(e) => setPeriod(e.target.value)}>
               <MenuItem value="7d">Últimos 7 dias</MenuItem>
@@ -165,8 +184,8 @@ export default function Dashboard() {
         </Grid>
 
         {/* Row 2: Charts and Distribution */}
-        <Grid item xs={12} md={8}>
-          <Card sx={{ p: 1 }}>
+        <Grid item xs={12} md={8} className="stagger-entrance">
+          <Card className="glass-panel" sx={{ p: 1 }}>
             <CardContent>
               <Typography variant="h6" fontWeight={700} mb={3}>Performance de Engajamento</Typography>
               <Box sx={{ height: 320, width: '100%' }}>
@@ -201,8 +220,8 @@ export default function Dashboard() {
           </Card>
         </Grid>
 
-        <Grid item xs={12} md={4}>
-          <Card sx={{ height: '100%', p: 1 }}>
+        <Grid item xs={12} md={4} className="stagger-entrance">
+          <Card className="glass-panel" sx={{ height: '100%', p: 1 }}>
             <CardContent>
               <Typography variant="h6" fontWeight={700} mb={3}>Intenções do Público</Typography>
               <Box sx={{ height: 200, width: '100%', mb: 4 }}>
@@ -243,8 +262,8 @@ export default function Dashboard() {
         </Grid>
 
         {/* Row 3: Recent Activity and Insights */}
-        <Grid item xs={12} md={6}>
-          <Card sx={{ height: '100%' }}>
+        <Grid item xs={12} md={6} className="stagger-entrance">
+          <Card className="glass-panel" sx={{ height: '100%' }}>
             <CardContent>
               <Typography variant="h6" fontWeight={700} gutterBottom>Atividade Recente do Agente</Typography>
               <Typography variant="body2" color="text.secondary" mb={3}>Últimas interações em tempo real</Typography>
@@ -285,11 +304,12 @@ export default function Dashboard() {
 
         <Grid item xs={12} md={6}>
           <Grid container spacing={3}>
-            <Grid item xs={12}>
-              <Card sx={{ 
+            <Grid item xs={12} className="stagger-entrance">
+              <Card className="float-animation" sx={{ 
                 background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(37, 99, 235, 0.05) 100%)',
                 borderColor: 'rgba(59, 130, 246, 0.2)',
-                position: 'relative'
+                position: 'relative',
+                backdropFilter: 'blur(10px)'
               }}>
                 <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
                   <Box sx={{ 

@@ -17,6 +17,7 @@ import Alertas from './pages/Alertas';
 import Login from './pages/Login';
 import ProtectedRoute from './components/ProtectedRoute';
 import Logs from './pages/Logs';
+import Conhecimento from './pages/Conhecimento';
 
 const queryClient = new QueryClient();
 
@@ -44,6 +45,7 @@ function App() {
                       <Route path="configuracoes" element={<Configuracoes />} />
                       <Route path="alertas" element={<Alertas />} />
                       <Route path="logs" element={<Logs />} />
+                      <Route path="conhecimento" element={<Conhecimento />} />
                     </Routes>
                   </Layout>
                 </ProtectedRoute>

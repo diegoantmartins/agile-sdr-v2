@@ -35,12 +35,13 @@ export default function Login() {
       bgcolor: '#0A0E17',
       backgroundImage: 'radial-gradient(circle at 50% 50%, #1e293b 0%, #0A0E17 100%)'
     }}>
-      <Card sx={{ 
+      <Card className="glass-panel stagger-entrance" sx={{ 
         width: 420, 
         p: 2, 
-        bgcolor: '#1F2937', 
-        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5)',
-        border: '1px solid rgba(255, 255, 255, 0.08)'
+        bgcolor: 'rgba(15, 23, 42, 0.6)', 
+        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+        border: '1px solid rgba(255, 255, 255, 0.05)',
+        backdropFilter: 'blur(20px)'
       }}>
         <CardContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 4 }}>
@@ -88,10 +89,16 @@ export default function Login() {
               disabled={loading}
               sx={{ 
                 mt: 4, 
-                py: 1.5,
+                py: 2,
                 fontSize: '1rem',
-                fontWeight: 700,
-                boxShadow: '0 4px 6px -1px rgba(59, 130, 246, 0.4)'
+                fontWeight: 800,
+                borderRadius: 2,
+                background: 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)',
+                boxShadow: '0 8px 16px -4px rgba(59, 130, 246, 0.5)',
+                '&:hover': {
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 12px 20px -4px rgba(59, 130, 246, 0.6)'
+                }
               }}
             >
               {loading ? <CircularProgress size={24} color="inherit" /> : 'Acessar Terminal'}

@@ -47,15 +47,15 @@ export default function Conversas() {
         <Typography variant="body2" color="text.secondary">Gerencie todas as conversas do seu agente</Typography>
       </Box>
 
-      <Card sx={{ flex: 1, display: 'flex', overflow: 'hidden', position: 'relative' }}>
+      <Card className="glass-panel" sx={{ flex: 1, display: 'flex', overflow: 'hidden', position: 'relative' }}>
         {/* Sidebar contatos - oculta em mobile se houver conversa selecionada */}
         <Box sx={{ 
           width: { xs: '100%', md: 350 }, 
           display: { xs: selectedPhone ? 'none' : 'flex', md: 'flex' },
-          borderRight: '1px solid #E2E8F0', 
+          borderRight: '1px solid rgba(255, 255, 255, 0.08)', 
           flexDirection: 'column' 
         }}>
-          <Box sx={{ p: 2, borderBottom: '1px solid #E2E8F0' }}>
+          <Box sx={{ p: 2, borderBottom: '1px solid rgba(255, 255, 255, 0.08)' }}>
             <ToggleButtonGroup value={filter} exclusive onChange={(_, v) => v && setFilter(v)} size="small" fullWidth>
               <ToggleButton value="all">Todas</ToggleButton>
               <ToggleButton value="ai">IA</ToggleButton>
@@ -111,10 +111,10 @@ export default function Conversas() {
                 <Button variant="outlined" size="small" sx={{ display: { xs: 'none', sm: 'inline-flex' } }}>Assumir</Button>
               </Box>
 
-              <Box sx={{ flex: 1, p: 2, overflow: 'auto', bgcolor: '#F8FAFC' }}>
+              <Box sx={{ flex: 1, p: 2, overflow: 'auto', background: 'rgba(0,0,0,0.2)' }}>
                 {selected.messages.map((msg, idx) => (
                   <Box key={idx} sx={{ display: 'flex', flexDirection: 'column', alignItems: msg.direction === 'incoming' ? 'flex-start' : 'flex-end', mb: 2 }}>
-                    <Box sx={{ maxWidth: '85%', p: 2, borderRadius: 2, bgcolor: msg.direction === 'incoming' ? 'white' : 'primary.main', color: msg.direction === 'incoming' ? 'text.primary' : 'white', boxShadow: 1 }}>
+                    <Box sx={{ maxWidth: '85%', p: 2, borderRadius: 2, bgcolor: msg.direction === 'incoming' ? 'rgba(255,255,255,0.05)' : 'primary.main', color: 'white', border: '1px solid rgba(255,255,255,0.08)' }}>
                       <Typography variant="body2">{msg.content}</Typography>
                     </Box>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
@@ -124,7 +124,7 @@ export default function Conversas() {
                 ))}
               </Box>
 
-              <Box sx={{ p: 2, borderTop: '1px solid #E2E8F0', bgcolor: 'white' }}>
+              <Box sx={{ p: 2, borderTop: '1px solid rgba(255, 255, 255, 0.08)', background: 'transparent' }}>
                 <Box sx={{ display: 'flex', gap: 1 }}>
                   <TextField fullWidth size="small" placeholder="Digite sua mensagem..." value={newMessage} onChange={(e) => setNewMessage(e.target.value)} />
                   <IconButton color="primary" disabled={!newMessage.trim()}><Send /></IconButton>
@@ -142,7 +142,7 @@ export default function Conversas() {
         <Box sx={{ 
           width: 280, 
           display: { xs: 'none', lg: 'block' },
-          borderLeft: '1px solid #E2E8F0', 
+          borderLeft: '1px solid rgba(255, 255, 255, 0.08)', 
           p: 2, 
           overflow: 'auto' 
         }}>

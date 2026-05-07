@@ -27,15 +27,15 @@ export default function Alertas() {
         <Button variant="outlined" startIcon={<Settings />}>Configurar</Button>
       </Box>
       <Grid container spacing={3}>
-        <Grid item xs={6} sm={4}><Card><CardContent sx={{ textAlign: 'center' }}><NotificationsActive sx={{ fontSize: 40, color: 'primary.main', mb: 1 }} /><Typography variant="h4" fontWeight={700}>{unread}</Typography><Typography variant="body2" color="text.secondary">Não Lidos</Typography></CardContent></Card></Grid>
-        <Grid item xs={6} sm={4}><Card><CardContent sx={{ textAlign: 'center' }}><Error sx={{ fontSize: 40, color: 'error.main', mb: 1 }} /><Typography variant="h4" fontWeight={700}>{errors}</Typography><Typography variant="body2" color="text.secondary">Críticos</Typography></CardContent></Card></Grid>
-        <Grid item xs={6} sm={4}><Card><CardContent sx={{ textAlign: 'center' }}><Warning sx={{ fontSize: 40, color: 'warning.main', mb: 1 }} /><Typography variant="h4" fontWeight={700}>{list.filter(a => a.type === 'warning' && !a.read).length}</Typography><Typography variant="body2" color="text.secondary">Atenção</Typography></CardContent></Card></Grid>
-        <Grid item xs={12}>
-          <Card>
+        <Grid item xs={6} sm={4} className="stagger-entrance"><Card className="glass-panel hover-lift"><CardContent sx={{ textAlign: 'center' }}><NotificationsActive sx={{ fontSize: 40, color: 'primary.main', mb: 1 }} /><Typography variant="h4" fontWeight={700}>{unread}</Typography><Typography variant="body2" color="text.secondary">Não Lidos</Typography></CardContent></Card></Grid>
+        <Grid item xs={6} sm={4} className="stagger-entrance"><Card className="glass-panel hover-lift"><CardContent sx={{ textAlign: 'center' }}><Error sx={{ fontSize: 40, color: 'error.main', mb: 1 }} /><Typography variant="h4" fontWeight={700}>{errors}</Typography><Typography variant="body2" color="text.secondary">Críticos</Typography></CardContent></Card></Grid>
+        <Grid item xs={6} sm={4} className="stagger-entrance"><Card className="glass-panel hover-lift"><CardContent sx={{ textAlign: 'center' }}><Warning sx={{ fontSize: 40, color: 'warning.main', mb: 1 }} /><Typography variant="h4" fontWeight={700}>{list.filter(a => a.type === 'warning' && !a.read).length}</Typography><Typography variant="body2" color="text.secondary">Atenção</Typography></CardContent></Card></Grid>
+        <Grid item xs={12} className="stagger-entrance">
+          <Card className="glass-panel">
             <CardContent>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}><Typography variant="h6" fontWeight={600}>Lista de Alertas</Typography><Chip label={`${list.length} total`} size="small" /></Box>
               <List>{list.map(a => (
-                <ListItem key={a.id} sx={{ bgcolor: a.read ? 'transparent' : '#F0F9FF', borderRadius: 1, mb: 1, borderLeft: `4px solid ${colors[a.type as keyof typeof colors]}` }}>
+                <ListItem key={a.id} sx={{ bgcolor: a.read ? 'transparent' : 'rgba(59, 130, 246, 0.05)', borderRadius: 1, mb: 1, borderLeft: `4px solid ${colors[a.type as keyof typeof colors]}`, backdropFilter: a.read ? 'none' : 'blur(5px)' }}>
                   <ListItemIcon sx={{ color: colors[a.type as keyof typeof colors] }}>{icons[a.type as keyof typeof icons]}</ListItemIcon>
                   <ListItemText primary={<Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}><Typography fontWeight={a.read ? 400 : 600}>{a.title}</Typography>{!a.read && <Chip label="Novo" size="small" color="primary" sx={{ height: 20 }} />}</Box>} secondary={<><Typography variant="body2" color="text.secondary">{a.message}</Typography><Typography variant="caption" color="text.secondary">{a.time}</Typography></>} />
                   <ListItemSecondaryAction><IconButton onClick={() => markRead(a.id)}><CheckCircle /></IconButton><IconButton onClick={() => remove(a.id)} color="error"><Delete /></IconButton></ListItemSecondaryAction>
@@ -44,9 +44,9 @@ export default function Alertas() {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12}>
-          <Card sx={{ bgcolor: '#F0F9FF', border: '1px solid #BAE6FD' }}>
-            <CardContent><Typography variant="h6" fontWeight={600} color="#0369A1" mb={2}>Configurações de Alertas</Typography><Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}><FormControlLabel control={<Switch defaultChecked />} label="Alertas de erro" /><FormControlLabel control={<Switch defaultChecked />} label="Alertas de performance" /><FormControlLabel control={<Switch defaultChecked />} label="Notificações por email" /></Box></CardContent>
+        <Grid item xs={12} className="stagger-entrance">
+          <Card className="glass-panel" sx={{ background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(37, 99, 235, 0.05) 100%)', borderColor: 'rgba(59, 130, 246, 0.2)' }}>
+            <CardContent><Typography variant="h6" fontWeight={600} color="primary.light" mb={2}>Configurações de Alertas</Typography><Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}><FormControlLabel control={<Switch defaultChecked />} label="Alertas de erro" /><FormControlLabel control={<Switch defaultChecked />} label="Alertas de performance" /><FormControlLabel control={<Switch defaultChecked />} label="Notificações por email" /></Box></CardContent>
           </Card>
         </Grid>
       </Grid>

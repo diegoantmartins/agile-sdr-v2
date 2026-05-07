@@ -122,8 +122,8 @@ export default function Logs() {
 
       {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
 
-      <Card sx={{ bgcolor: '#0f172a', color: '#e2e8f0', borderRadius: 2, overflow: 'hidden', border: '1px solid #1e293b' }}>
-        <Box sx={{ p: 2, borderBottom: '1px solid #1e293b', display: 'flex', gap: 2, bgcolor: '#1e293b' }}>
+      <Card className="glass-panel stagger-entrance" sx={{ bgcolor: 'rgba(15, 23, 42, 0.6)', color: '#e2e8f0', borderRadius: 2, overflow: 'hidden', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
+        <Box sx={{ p: 2, borderBottom: '1px solid rgba(255, 255, 255, 0.05)', display: 'flex', gap: 2, bgcolor: 'rgba(30, 41, 59, 0.4)' }}>
           <TextField
             size="small"
             placeholder="Filtrar por mensagem, nível ou serviço..."
@@ -131,17 +131,21 @@ export default function Logs() {
             onChange={(e) => setFilter(e.target.value)}
             sx={{ 
               flex: 1, 
-              '& .MuiOutlinedInput-root': { color: '#fff', bgcolor: '#0f172a' },
+              '& .MuiOutlinedInput-root': { 
+                color: '#fff', 
+                bgcolor: 'rgba(15, 23, 42, 0.8)',
+                borderRadius: 2
+              },
               '& .MuiInputLabel-root': { color: '#94a3b8' },
             }}
             InputProps={{
-              startAdornment: <Search sx={{ mr: 1, color: '#64748b' }} />,
+              startAdornment: <Search sx={{ mr: 1, color: 'primary.main' }} />,
             }}
           />
         </Box>
         <CardContent 
           ref={scrollRef}
-          sx={{ p: 0, height: '65vh', overflowY: 'auto', bgcolor: '#020617' }}
+          sx={{ p: 0, height: '65vh', overflowY: 'auto', bgcolor: 'transparent' }}
         >
           {loading && logs.length === 0 ? (
             <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>

@@ -171,8 +171,8 @@ export default function Simulador() {
 
       <Grid container spacing={4}>
         <Grid item xs={12} md={4}>
-          <Box sx={{ position: 'sticky', top: 24 }}>
-            <Card sx={{ border: '1px solid rgba(59, 130, 246, 0.2)' }}>
+          <Box sx={{ position: 'sticky', top: 24 }} className="stagger-entrance">
+            <Card className="glass-panel" sx={{ border: '1px solid rgba(59, 130, 246, 0.2)' }}>
               <CardContent sx={{ p: 4 }}>
                 <Typography variant="h6" fontWeight={800} mb={3} display="flex" alignItems="center" gap={1.5} sx={{ color: 'primary.light' }}>
                   <Psychology /> Parâmetros de Teste
@@ -225,8 +225,8 @@ export default function Simulador() {
           </Box>
         </Grid>
 
-        <Grid item xs={12} md={8}>
-          <Card sx={{ 
+        <Grid item xs={12} md={8} className="stagger-entrance">
+          <Card className="glass-panel" sx={{ 
             height: '70vh', 
             display: 'flex', 
             flexDirection: 'column', 
@@ -240,7 +240,8 @@ export default function Simulador() {
                   background: 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)', 
                   width: 40, 
                   height: 40,
-                  boxShadow: '0 0 15px rgba(59, 130, 246, 0.3)'
+                  boxShadow: '0 0 15px rgba(59, 130, 246, 0.3)',
+                  className: 'float-animation'
                 }}>
                   <SmartToy />
                 </Avatar>

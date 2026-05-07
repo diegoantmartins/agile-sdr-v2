@@ -18,16 +18,10 @@ const temperatureColors: Record<string, string> = { hot: '#EF4444', warm: '#F59E
 function LeadCard({ lead, onClick }: { lead: Lead; onClick: () => void }) {
   return (
     <Card 
+      className="hover-lift stagger-entrance"
       sx={{ 
         mb: 2, 
         cursor: 'pointer', 
-        transition: 'all 0.2s',
-        '&:hover': { 
-          transform: 'translateY(-2px)',
-          borderColor: 'primary.main',
-          boxShadow: '0 8px 20px rgba(0,0,0,0.4)',
-          bgcolor: 'rgba(255, 255, 255, 0.04)'
-        } 
       }} 
       onClick={onClick}
     >
@@ -163,7 +157,7 @@ export default function Leads() {
           {columns.map((col) => {
             const stageLeads = getLeadsByStatus(col.status);
             return (
-              <Box key={col.status} sx={{ minWidth: 280, flex: 1, bgcolor: 'rgba(255, 255, 255, 0.01)', borderRadius: 3, p: 1.5 }}>
+              <Box key={col.status} className="stagger-entrance" sx={{ minWidth: 280, flex: 1, bgcolor: 'rgba(255, 255, 255, 0.01)', borderRadius: 3, p: 1.5 }}>
                 <Box sx={{ 
                   display: 'flex', 
                   alignItems: 'center', 

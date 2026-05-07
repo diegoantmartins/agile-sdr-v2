@@ -69,8 +69,8 @@ export default function Relatorios() {
       </Box>
 
       <Grid container spacing={3}>
-        <Grid item xs={6} sm={4} md={2}>
-          <Card><CardContent sx={{ textAlign: 'center' }}><People color="primary" sx={{ fontSize: 32, mb: 1 }} /><Typography variant="h4" fontWeight={700}>342</Typography><Typography variant="body2" color="text.secondary">Conversas</Typography></CardContent></Card>
+        <Grid item xs={6} sm={4} md={2} className="stagger-entrance">
+          <Card className="hover-lift"><CardContent sx={{ textAlign: 'center' }}><People color="primary" sx={{ fontSize: 32, mb: 1 }} /><Typography variant="h4" fontWeight={700}>342</Typography><Typography variant="body2" color="text.secondary">Conversas</Typography></CardContent></Card>
         </Grid>
         <Grid item xs={6} sm={4} md={2}>
           <Card><CardContent sx={{ textAlign: 'center' }}><Typography variant="h4" fontWeight={700}>45s</Typography><Typography variant="body2" color="text.secondary">Tempo Médio</Typography></CardContent></Card>
@@ -88,8 +88,8 @@ export default function Relatorios() {
           <Card><CardContent sx={{ textAlign: 'center' }}><Analytics color="secondary" sx={{ fontSize: 32, mb: 1 }} /><Typography variant="h4" fontWeight={700}>8.2%</Typography><Typography variant="body2" color="text.secondary">Conversão</Typography></CardContent></Card>
         </Grid>
 
-        <Grid item xs={12} md={8}>
-          <Card>
+        <Grid item xs={12} md={8} className="stagger-entrance">
+          <Card className="glass-panel">
             <CardContent>
               <Typography variant="h6" fontWeight={600} mb={2}>Performance Semanal</Typography>
               <ResponsiveContainer width="100%" height={250}>
@@ -106,8 +106,8 @@ export default function Relatorios() {
           </Card>
         </Grid>
 
-        <Grid item xs={12} md={4}>
-          <Card sx={{ height: '100%' }}>
+        <Grid item xs={12} md={4} className="stagger-entrance">
+          <Card className="glass-panel" sx={{ height: '100%' }}>
             <CardContent>
               <Typography variant="h6" fontWeight={600} mb={2}>Origem dos Leads</Typography>
               {mockSources.map((item) => (
@@ -120,10 +120,10 @@ export default function Relatorios() {
           </Card>
         </Grid>
 
-        <Grid item xs={12}>
-          <Card sx={{ bgcolor: '#F0F9FF', border: '1px solid #BAE6FD' }}>
+        <Grid item xs={12} className="stagger-entrance">
+          <Card className="float-animation" sx={{ background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(37, 99, 235, 0.05) 100%)', borderColor: 'rgba(59, 130, 246, 0.2)', backdropFilter: 'blur(10px)' }}>
             <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Box><Typography variant="h6" fontWeight={600} color="#0369A1">🤖 Análise Inteligente</Typography><Typography variant="body2" color="#075985" mb={2}>Deixe a IA analisar seus dados</Typography></Box>
+              <Box><Typography variant="h6" fontWeight={600} color="primary.light">🤖 Análise Inteligente</Typography><Typography variant="body2" color="text.secondary" mb={2}>Deixe a IA analisar seus dados</Typography></Box>
               <Button variant="contained" onClick={handleAnalyze} disabled={analyzing} sx={{ ml: 'auto' }}>{analyzing ? <CircularProgress size={24} /> : 'Analisar com IA'}</Button>
             </CardContent>
           </Card>

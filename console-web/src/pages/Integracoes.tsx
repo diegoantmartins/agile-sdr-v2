@@ -16,11 +16,11 @@ export default function Integracoes() {
       <Box sx={{ mb: 3 }}><Typography variant="h4" fontWeight={700}>Integrações</Typography><Typography variant="body2" color="text.secondary">Conecte ferramentas externas</Typography></Box>
       <Grid container spacing={3}>
         {integrations.map((int) => (
-          <Grid item xs={12} sm={6} md={4} key={int.id}>
-            <Card>
+          <Grid item xs={12} sm={6} md={4} key={int.id} className="stagger-entrance">
+            <Card className="glass-panel hover-lift">
               <CardContent>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-                  <Box sx={{ width: 48, height: 48, borderRadius: 2, bgcolor: int.status === 'connected' ? '#ECFDF5' : '#F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center', color: int.status === 'connected' ? '#10B981' : '#64748B' }}>{int.icon}</Box>
+                  <Box sx={{ width: 48, height: 48, borderRadius: 2, bgcolor: int.status === 'connected' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(255, 255, 255, 0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: int.status === 'connected' ? '#10B981' : '#64748B', boxShadow: int.status === 'connected' ? '0 0 15px rgba(16, 185, 129, 0.2)' : 'none' }}>{int.icon}</Box>
                   <Chip size="small" icon={int.status === 'connected' ? <CheckCircle /> : undefined} label={int.status === 'connected' ? 'Conectado' : 'Desconectado'} color={int.status === 'connected' ? 'success' : 'default'} />
                 </Box>
                 <Typography variant="h6" fontWeight={600} mb={0.5}>{int.name}</Typography>

@@ -25,13 +25,13 @@ export default function Fluxos() {
         <Button variant="contained" startIcon={<Add />}>Novo Fluxo</Button>
       </Box>
       <Grid container spacing={3}>
-        <Grid item xs={12} md={4}>
-          <Card>
+        <Grid item xs={12} md={4} className="stagger-entrance">
+          <Card className="glass-panel">
             <CardContent>
               <Typography variant="h6" fontWeight={600} mb={2}>Meus Fluxos</Typography>
               <List>
                 {flows.map((f) => (
-                  <ListItem key={f.id} sx={{ bgcolor: selected === f.id ? '#F0F9FF' : 'transparent', borderRadius: 1, mb: 1, cursor: 'pointer' }} onClick={() => setSelected(f.id)}>
+                  <ListItem key={f.id} className="hover-lift" sx={{ bgcolor: selected === f.id ? 'rgba(59, 130, 246, 0.12)' : 'transparent', borderRadius: 1, mb: 1, cursor: 'pointer' }} onClick={() => setSelected(f.id)}>
                     <ListItemIcon><AccountTree color="primary" /></ListItemIcon>
                     <ListItemText primary={f.name} secondary={<Box sx={{ display: 'flex', gap: 1, mt: 0.5 }}><Chip label={`${f.nodes} blocos`} size="small" sx={{ height: 20 }} /><Chip label={f.status === 'active' ? 'Ativo' : 'Inativo'} size="small" color={f.status === 'active' ? 'success' : 'default'} sx={{ height: 20 }} /></Box>} />
                   </ListItem>
@@ -39,7 +39,7 @@ export default function Fluxos() {
               </List>
             </CardContent>
           </Card>
-          <Card sx={{ mt: 2 }}>
+          <Card className="glass-panel" sx={{ mt: 2 }}>
             <CardContent>
               <Typography variant="h6" fontWeight={600} mb={2}>Blocos Disponíveis</Typography>
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
@@ -48,15 +48,15 @@ export default function Fluxos() {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} md={8}>
-          <Card sx={{ minHeight: 400 }}>
+        <Grid item xs={12} md={8} className="stagger-entrance">
+          <Card className="glass-panel" sx={{ minHeight: 400 }}>
             <CardContent sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 4 }}>
               {selected ? (
                 <>
                   <Typography variant="h6" fontWeight={600} mb={4}>Editor de Fluxo</Typography>
-                  <Box sx={{ p: 2, border: '2px dashed #682EE4', borderRadius: 2, bgcolor: '#F5F3FF', mb: 2 }}><Typography fontWeight={600}>Mensagem - Boas-vindas</Typography></Box>
+                  <Box sx={{ p: 2, border: '2px dashed #682EE4', borderRadius: 2, bgcolor: 'rgba(104, 46, 228, 0.1)', mb: 2 }}><Typography fontWeight={600}>Mensagem - Boas-vindas</Typography></Box>
                   <Box sx={{ width: 2, height: 30, bgcolor: '#CBD5E1', mb: 2 }} />
-                  <Box sx={{ p: 2, border: '2px solid #F59E0B', borderRadius: 2, bgcolor: '#FFFBEB' }}><Typography fontWeight={600}>Condição - Verificar interesse</Typography></Box>
+                  <Box sx={{ p: 2, border: '2px solid #F59E0B', borderRadius: 2, bgcolor: 'rgba(245, 158, 11, 0.1)' }}><Typography fontWeight={600}>Condição - Verificar interesse</Typography></Box>
                   <Button variant="outlined" startIcon={<Add />} sx={{ mt: 4 }}>Adicionar Bloco</Button>
                 </>
               ) : (

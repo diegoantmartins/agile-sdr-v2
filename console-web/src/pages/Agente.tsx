@@ -147,10 +147,9 @@ export default function Agente() {
         <Alert severity="success" sx={{ mb: 2 }}>Configuração salva com sucesso!</Alert>
       )}
 
-      <Card>
+      <Card className="glass-panel stagger-entrance">
         <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ borderBottom: 1, borderColor: 'divider', px: 2 }}>
           <Tab label="Prompt & Personalidade" />
-          <Tab label="Base de Conhecimento" />
           <Tab label="Comportamento" />
           <Tab label="Qualificação" />
         </Tabs>
@@ -200,63 +199,6 @@ export default function Agente() {
           )}
 
           {tab === 1 && (
-            <Box>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <MenuBook color="primary" />
-                  <Typography variant="h6">Itens de Conhecimento</Typography>
-                </Box>
-                <Button 
-                  variant="contained" 
-                  color="primary" 
-                  startIcon={<Add />}
-                  onClick={() => {
-                    setEditingKnowledge(null);
-                    setKnowledgeForm({ title: '', content: '', category: 'Produto' });
-                    setOpenKnowledgeDialog(true);
-                  }}
-                >
-                  Novo Item
-                </Button>
-              </Box>
-
-              {isKnowledgeLoading ? (
-                <CircularProgress />
-              ) : (
-                <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 2 }}>
-                  {knowledge?.map((k) => (
-                    <Card key={k.id} variant="outlined" sx={{ bgcolor: 'rgba(255,255,255,0.02)' }}>
-                      <CardContent>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                          <Chip label={k.category} size="small" color="primary" variant="outlined" />
-                          <Box>
-                            <IconButton size="small" onClick={() => handleEditKnowledge(k)}><Edit fontSize="small" /></IconButton>
-                            <IconButton size="small" color="error" onClick={() => deleteKnowledge.mutate(k.id)}><Delete fontSize="small" /></IconButton>
-                          </Box>
-                        </Box>
-                        <Typography variant="subtitle1" fontWeight={600}>{k.title}</Typography>
-                        <Typography variant="body2" color="text.secondary" sx={{ 
-                          display: '-webkit-box', 
-                          WebkitLineClamp: 3, 
-                          WebkitBoxOrient: 'vertical', 
-                          overflow: 'hidden' 
-                        }}>
-                          {k.content}
-                        </Typography>
-                      </CardContent>
-                    </Card>
-                  ))}
-                  {knowledge?.length === 0 && (
-                    <Typography color="text.secondary" sx={{ gridColumn: '1/-1', textAlign: 'center', py: 4 }}>
-                      Nenhum item de conhecimento cadastrado.
-                    </Typography>
-                  )}
-                </Box>
-              )}
-            </Box>
-          )}
-
-          {tab === 2 && (
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
               <FormControlLabel 
                 control={
@@ -299,7 +241,7 @@ export default function Agente() {
             </Box>
           )}
 
-          {tab === 3 && (
+          {tab === 2 && (
             <Box>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
                 <Typography variant="subtitle2" fontWeight={600}>Perguntas de Qualificação</Typography>
@@ -313,12 +255,13 @@ export default function Agente() {
               </Box>
               <List sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                 {config.qualificationQuestions.map((q, idx) => (
-                  <ListItem key={idx} sx={{ 
+                  <ListItem key={idx} className="hover-lift" sx={{ 
                     bgcolor: 'rgba(255, 255, 255, 0.02)', 
                     borderRadius: 2, 
                     border: '1px solid rgba(255, 255, 255, 0.05)',
                     px: 2,
-                    py: 1.5
+                    py: 1.5,
+                    mb: 1
                   }}>
                     <ListItemText 
                       primary={

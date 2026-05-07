@@ -46,7 +46,7 @@ export default function Configuracoes() {
 
       {error && <Alert severity="warning" sx={{ mb: 2 }}>Erro ao carregar configurações. Usando valores padrão.</Alert>}
 
-      <Card>
+      <Card className="glass-panel stagger-entrance">
         <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ borderBottom: 1, borderColor: 'divider', px: 2 }}>
           <Tab label="Agente" />
           <Tab label="Webhooks" />
@@ -118,7 +118,7 @@ export default function Configuracoes() {
             <Grid container spacing={3}>
               <Grid item xs={12} md={6}>
                 <Typography variant="h6" fontWeight={600} mb={2}>Webhook WhatsApp (UAZAPI)</Typography>
-                <Box sx={{ bgcolor: '#F1F5F9', p: 2, borderRadius: 1, mb: 2 }}>
+                <Box sx={{ bgcolor: 'rgba(255, 255, 255, 0.04)', p: 2, borderRadius: 1, mb: 2, border: '1px solid rgba(255, 255, 255, 0.08)' }}>
                   <Typography variant="caption" color="text.secondary" display="block">URL do Webhook</Typography>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <Typography variant="body2" sx={{ fontFamily: 'monospace', flex: 1 }}>{webhookUrl}</Typography>

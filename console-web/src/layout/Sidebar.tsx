@@ -20,6 +20,7 @@ import {
   Settings,
   Notifications,
   Terminal,
+  MenuBook,
 } from '@mui/icons-material';
 import logo from '../assets/synapsea_logo.jpg';
 
@@ -34,6 +35,7 @@ const menuItems = [
   { path: '/integracoes', label: 'Integrações', icon: <Extension /> },
   { path: '/configuracoes', label: 'Configurações', icon: <Settings /> },
   { path: '/alertas', label: 'Alertas', icon: <Notifications /> },
+  { path: '/conhecimento', label: 'Base de Conhecimento', icon: <MenuBook /> },
   { path: '/logs', label: 'Logs de Sistema', icon: <Terminal /> },
 ];
 
