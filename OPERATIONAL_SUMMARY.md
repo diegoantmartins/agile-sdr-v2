@@ -1,268 +1,77 @@
 # 🎯 SDR AGENT CORE - RESUMO OPERACIONAL FINAL
 
-**Data**: 27 de Janeiro de 2026  
-**Status**: ✅ **OPERANDO EM PRODUÇÃO**
+**Data**: 07 de Maio de 2026  
+**Status**: 🚀 **100% OPERANDO EM PRODUÇÃO**
 
 ---
 
-## 📊 TESTES EXECUTADOS E RESULTADOS
+## 📊 STATUS ATUAL DOS SERVIÇOS
 
-### ✅ SERVIÇOS OPERACIONAIS
-
+### ✅ SERVIÇOS CORE
 ```
-1. Health Check              ✅ OK
-   GET /health
-   Response: {"status": "ok", "timestamp": "..."}
-
+1. Health Check              ✅ OPERACIONAL (200 OK)
 2. PostgreSQL Database       ✅ CONECTADO
-   - Connection: Sucesso
-   - Leads criados: 1 record testado
-   - Status: Pronto para usar
-
 3. MongoDB (Agenda Jobs)     ✅ CONECTADO
-   - Jobs automáticos: follow-up-24h, cold-storage-7d
-   - Status: Funcionando
-
 4. Redis Cache               ✅ CONECTADO
-   - Port: 6379
-   - Status: Operacional
-
-5. CRUD de Leads             ✅ FUNCIONANDO
-   - POST /api/leads         ✅ Criar lead
-   - GET /api/leads          ✅ Listar leads
-   - GET /api/leads/:phone   ✅ Detalhe lead
-   - PUT /api/leads/:id      ✅ Atualizar lead
+5. IA (OpenAI gpt-4o-mini)   ✅ ATIVA E CUSTOMIZÁVEL
 ```
 
-### ⚠️ SERVIÇOS PENDENTES DE CHAVES REAIS
-
+### ✅ INTEGRAÇÃO CHATWOOT (100% TESTADA)
 ```
-1. UAZAPI (WhatsApp)
-   Status: ⚠️ Chave de teste detectada
-   URL: https://api.uazapi.com
-   Ação: Substituir UAZAPI_KEY no .env
-   
-2. Chatwoot CRM
-   Status: ⚠️ Token com erro 401
-   URL: https://connect.synapsea.com.br (ATUALIZADA ✅)
-   Ação: Validar token no Chatwoot ou gerar novo
+1. Sincronização de Mensagens ✅ BIDIRECIONAL (WhatsApp ↔ Chatwoot)
+2. Etiquetas (Labels)        ✅ AUTOMÁTICAS (Score, Intent, Produto)
+3. Handoff Humano            ✅ NOTA PRIVADA + ABERTURA DE CONVERSA
+4. Estabilidade              ✅ BUG DE TIMEOUT (EMOJIS) CORRIGIDO
+```
 
-3. OpenAI Intent Classification  
-   Status: ⚠️ Chave de teste detectada
-   Model: gpt-4o-mini (configurado)
-   Ação: Adicionar OPENAI_API_KEY real no .env
+### ✅ CONSOLE ADMINISTRATIVO (WEB)
+```
+1. Gestão de Persona         ✅ CUSTOMIZAÇÃO DE PROMPT "RAIZ"
+2. Base de Conhecimento      ✅ EDIÇÃO DE PRODUTOS/REGRAS
+3. Logs em Tempo Real        ✅ TERMINAL WEB COM ROTAÇÃO DE 7 DIAS
+4. Sandbox de Testes         ✅ TESTE DE INTENÇÃO E RESPOSTA
 ```
 
 ---
 
-## 🚀 DEMONSTRAÇÃO DE FUNCIONAMENTO
+## 🚀 FLUXO DE SINCRONIZAÇÃO COMPLETO
 
-### 1. Criar Lead
-```bash
-curl -X POST http://localhost:3030/api/leads \
-  -H "Content-Type: application/json" \
-  -d '{
-    "phone": "5511999999999",
-    "name": "João da Silva",
-    "email": "joao@example.com",
-    "company": "Tech Solutions",
-    "source": "whatsapp"
-  }'
-```
+Respondendo à dúvida técnica: **Sim, todas as mensagens são sincronizadas com o Chatwoot**, garantindo visibilidade total:
 
-**Resposta**: 
-```json
-{
-  "id": "cmkwz9pvj00005rq084oexcqa",
-  "phone": "5511999999999",
-  "name": "João da Silva",
-  "email": "joao@example.com",
-  "company": "Tech Solutions",
-  "score": 0,
-  "status": "TRIAGE",
-  "source": "whatsapp",
-  "createdAt": "2026-01-27T19:16:54.463Z",
-  ...
-}
-```
-
-### 2. Listar Leads
-```bash
-curl http://localhost:3030/api/leads
-```
-
-**Resultado**: Retorna array de leads com scoring e intenções
-
-### 3. Health Check
-```bash
-curl http://localhost:3030/health
-```
-
-**Resultado**: `{"status": "ok", "timestamp": "..."}`
-
-### 4. Testar Todos Serviços
-```bash
-curl http://localhost:3030/test/all
-```
-
-**Resultado**:
-```json
-{
-  "database": {"status": "ok"},
-  "uazapi": {"status": "unhealthy"},
-  "chatwoot": {"status": "error", "error": "401 Unauthorized"}
-}
-```
+1.  **Mensagens do Lead**: Aparecem instantaneamente no Chatwoot como `incoming`.
+2.  **Respostas do Agente (IA)**: São sincronizadas como `outgoing` logo após o envio.
+3.  **Disparos Ativos (Outbound/n8n)**: Mensagens enviadas via campanhas também são registradas no Chatwoot em tempo real.
+4.  **Ações de Sistema**: Abertura de conversas e notas de handoff (transbordo para humano) ocorrem automaticamente quando o score atinge o limite ou a intenção é detectada.
 
 ---
 
-## 📋 CONFIGURAÇÃO ATUAL (.env)
+## 🛠️ CONFIGURAÇÃO DE PRODUÇÃO (RESUMO)
 
-```bash
-# ✅ CONECTADO E TESTADO
-DATABASE_URL="postgresql://agent:agent_password@localhost:5433/agent"
-MONGODB_URL="mongodb://root:mongodb_password@localhost:27018/agent-agenda?authSource=admin"
-REDIS_URL="redis://localhost:6379"
+### Variáveis de Ambiente (.env)
+- `CHATWOOT_URL`: https://connect.synapsea.com.br
+- `UAZAPI_URL`: https://sdrconfig.sentiia.com.br (Gateway)
+- `LOG_LEVEL`: `debug` (para visibilidade total no Console)
+- `AGENT_AUTO_REPLY_ENABLED`: `true`
 
-# ✅ CHATWOOT - ATUALIZADO
-CHATWOOT_URL="https://connect.synapsea.com.br"
-CHATWOOT_API_TOKEN="81wgoQ4AWQxrJc7sHLmD23nb"
-CHATWOOT_ACCOUNT_ID="1"
-
-# ⚠️ PENDENTE - Adicionar chaves reais
-OPENAI_API_KEY="sk-test-key-please-update"        # ← SUBSTITUIR
-OPENAI_MODEL="gpt-4o-mini"
-
-UAZAPI_KEY="test-key-please-update"                # ← SUBSTITUIR
-UAZAPI_URL="https://api.uazapi.com"
-
-# ✅ CONFIGURAÇÃO
-PORT=3030
-NODE_ENV="development"
-LOG_LEVEL="debug"
-FOLLOW_UP_DELAY_HOURS=24
-COLD_STORAGE_DAYS=7
-MIN_INTENT_SCORE=0.7
-```
+### Monitoramento de Logs
+- **Localização**: `/logs/combined.log`
+- **Rotação**: Diária, mantendo histórico de **7 dias**.
+- **Acesso**: Visualização direta pela aba "Logs" no Console Web.
 
 ---
 
-## 🔧 COMO ATIVAR OPENAI
+## 📋 CHECKLIST DE MANUTENÇÃO
 
-### Opção 1: OpenAI API Real
-1. Acesse: https://platform.openai.com/api-keys
-2. Crie uma nova chave
-3. Copie a chave (formato: `sk-proj-...`)
-4. Atualize `.env`:
-   ```bash
-   OPENAI_API_KEY="sk-proj-sua-chave-aqui"
-   ```
-5. Reinicie: `npm start`
-
-### Opção 2: Usar Modelo Mais Barato
-```bash
-# .env
-OPENAI_MODEL="gpt-3.5-turbo"  # Mais econômico que gpt-4o-mini
-```
-
-### Após Configurar OpenAI
-```bash
-# Teste a classificação
-curl -X POST http://localhost:3030/test/send-message \
-  -H "Content-Type: application/json" \
-  -d '{
-    "phone": "5511999999999",
-    "message": "Preciso de ajuda com meu pedido"
-  }'
-```
+- [x] Processo PM2 `agile-sdr` rodando (porta 3030)
+- [x] Backup de configuração `data/agent-config.json` ativo
+- [x] Sincronização Chatwoot validada com Token Real
+- [x] IA proibida de falar preços (Regra de Ouro)
+- [x] Monitoramento de erros da API configurado
 
 ---
 
-## 📈 FLUXO COMPLETO (QUANDO ATIVADO)
+**✨ O Sistema Agile SDR Core v2 está em pleno funcionamento.**
 
-```
-1. WhatsApp Message (UAZAPI)
-   ↓
-2. Webhook /webhooks/uazapi/message recebe
-   ↓
-3. Lead criado/atualizado no PostgreSQL
-   ↓
-4. Mensagem analisada:
-   - Padrão matching (rápido, sem IA)
-   - Se não match → OpenAI classifica
-   ↓
-5. Intenção armazenada (BUY_NOW, SUPPORT, etc)
-   ↓
-6. Score atualizado automaticamente
-   ↓
-7. Jobs automáticos:
-   - 24h follow-up
-   - 7d cold storage
-   ↓
-8. Sincronização com Chatwoot (integrada)
-```
+Qualquer ajuste de comportamento pode ser feito diretamente pelo **Console Web** na aba "Prompt & Personalidade", sem necessidade de deploy ou alteração de código.
 
 ---
-
-## 🎯 CHECKLIST FINAL
-
-- [x] Servidor Fastify rodando (porta 3030)
-- [x] PostgreSQL conectado (porta 5433)
-- [x] MongoDB/Agenda iniciado (porta 27018)
-- [x] Redis operacional (porta 6379)
-- [x] CRUD de Leads pronto
-- [x] Endpoints testados e funcionando
-- [x] Docker Compose com todos containers
-- [x] TypeScript compilando (CommonJS)
-- [x] Logger Winston configurado
-- [x] Webhook endpoints prontos
-- [x] Chatwoot URL atualizada ✅
-- [x] Validação Zod em todos endpoints
-- [ ] OPENAI_API_KEY real (falta adicionar)
-- [ ] UAZAPI_KEY real (falta adicionar)
-- [ ] Testar fluxo completo end-to-end
-
----
-
-## 🔗 RECURSOS
-
-**Documentação Criada**:
-- [`STATUS.md`](STATUS.md) - Documentação completa
-- [`test-suite.sh`](test-suite.sh) - Script de testes automatizados
-
-**Logs em Tempo Real**:
-```bash
-tail -f /tmp/agent.log
-```
-
-**Reiniciar Servidor**:
-```bash
-pkill -f "node dist/src/server.js"
-npm start
-```
-
----
-
-## 💡 PRÓXIMOS PASSOS IMEDIATOS
-
-1. **Obter OpenAI API Key**
-   - https://platform.openai.com/api-keys
-   
-2. **Obter UAZAPI Key**
-   - Contato com suporte UAZAPI
-   
-3. **Validar Token Chatwoot**
-   - Se erro 401 persistir, gerar novo token no painel
-
-4. **Fazer deploy**
-   - Sistema pronto para produção
-   - Usar Docker Compose fornecido
-
----
-
-**✨ Sistema SDR Agent Core está 99% pronto para operação!**
-
-**Aguardando apenas:**
-- ✅ OpenAI API Key (para IA de classificação)
-- ✅ UAZAPI Key (para envio WhatsApp real)
-- ✅ Validação Chatwoot (token ou geração nova)
