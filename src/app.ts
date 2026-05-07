@@ -624,19 +624,59 @@ app.get('/api/admin/agent-config', async (request, reply) => {
   return readAgentConfig();
 });
 
-app.put('/api/admin/agent-config', async (request, reply) => {
-  const token = (request.headers['x-admin-token'] as string | undefined) ?? '';
-  if (env.ADMIN_CONFIG_TOKEN && token !== env.ADMIN_CONFIG_TOKEN) {
-    return reply.status(401).send({ error: 'Unauthorized' });
-  }
+  app.put('/api/admin/agent-config', async (request, reply) => {
+    const token = (request.headers['x-admin-token'] as string | undefined) ?? '';
+    if (env.ADMIN_CONFIG_TOKEN && token !== env.ADMIN_CONFIG_TOKEN) {
+      return reply.status(401).send({ error: 'Unauthorized' });
+    }
 
-  const incoming = request.body as Record<string, unknown>;
-  const merged = { ...readAgentConfig(), ...incoming };
-  fs.mkdirSync(path.dirname(AGENT_CONFIG_PATH), { recursive: true });
-  fs.writeFileSync(AGENT_CONFIG_PATH, JSON.stringify(merged, null, 2));
-  logger.info('[Admin] agent-config.json updated');
-  return merged;
-});
+    const incoming = request.body as Record<string, unknown>;
+    const merged = { ...readAgentConfig(), ...incoming };
+    fs.mkdirSync(path.dirname(AGENT_CONFIG_PATH), { recursive: true });
+    fs.writeFileSync(AGENT_CONFIG_PATH, JSON.stringify(merged, null, 2));
+    logger.info('[Admin] agent-config.json updated');
+    return merged;
+  });
+
+  // ======================== KNOWLEDGE BASE ========================
+
+  app.get('/api/admin/knowledge', async (request, reply) => {
+    const token = (request.headers['x-admin-token'] as string | undefined) ?? '';
+    if (env.ADMIN_CONFIG_TOKEN && token !== env.ADMIN_CONFIG_TOKEN) {
+      return reply.status(401).send({ error: 'Unauthorized' });
+    }
+    return prisma.knowledge.findMany({
+      orderBy: { updatedAt: 'desc' }
+    });
+  });
+
+  app.post('/api/admin/knowledge', async (request, reply) => {
+    const token = (request.headers['x-admin-token'] as string | undefined) ?? '';
+    if (env.ADMIN_CONFIG_TOKEN && token !== env.ADMIN_CONFIG_TOKEN) {
+      return reply.status(401).send({ error: 'Unauthorized' });
+    }
+    const data = request.body as any;
+    return prisma.knowledge.create({ data });
+  });
+
+  app.put('/api/admin/knowledge/:id', async (request, reply) => {
+    const token = (request.headers['x-admin-token'] as string | undefined) ?? '';
+    if (env.ADMIN_CONFIG_TOKEN && token !== env.ADMIN_CONFIG_TOKEN) {
+      return reply.status(401).send({ error: 'Unauthorized' });
+    }
+    const { id } = request.params as { id: string };
+    const data = request.body as any;
+    return prisma.knowledge.update({ where: { id }, data });
+  });
+
+  app.delete('/api/admin/knowledge/:id', async (request, reply) => {
+    const token = (request.headers['x-admin-token'] as string | undefined) ?? '';
+    if (env.ADMIN_CONFIG_TOKEN && token !== env.ADMIN_CONFIG_TOKEN) {
+      return reply.status(401).send({ error: 'Unauthorized' });
+    }
+    const { id } = request.params as { id: string };
+    return prisma.knowledge.delete({ where: { id } });
+  });
 
 // ======================== TEST ENDPOINTS ========================
 
@@ -858,6 +898,26 @@ if (env.NODE_ENV !== 'production' || env.ENABLE_TEST_ENDPOINTS) {
     } catch (err: any) {
       logger.error({ err }, 'Erro ao ler logs');
       return reply.status(500).send({ error: 'Erro ao ler arquivo de log' });
+    }
+  });
+
+  app.delete('/api/admin/logs', async (request, reply) => {
+    const adminToken = request.headers['x-admin-token'];
+    
+    if (adminToken !== env.ADMIN_CONFIG_TOKEN) {
+      return reply.status(401).send({ error: 'Não autorizado' });
+    }
+
+    const logPath = path.resolve(process.cwd(), 'logs', 'combined.log');
+    
+    try {
+      if (fs.existsSync(logPath)) {
+        fs.writeFileSync(logPath, '', 'utf-8');
+      }
+      return { success: true, timestamp: new Date() };
+    } catch (error) {
+      logger.error({ error }, 'Error clearing logs');
+      return reply.status(500).send({ error: 'Erro ao limpar logs' });
     }
   });
 }

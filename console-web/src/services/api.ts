@@ -157,6 +157,22 @@ export const messagesService = {
   getRecent: (limit = 20) => api.get<Message[]>('/api/messages/recent', { params: { limit } }).then((r) => r.data),
 };
 
+export interface Knowledge {
+  id: string;
+  title: string;
+  content: string;
+  category: string;
+  updatedAt: string;
+}
+
+export const knowledgeService = {
+  getAll: () => api.get<Knowledge[]>('/api/admin/knowledge').then((r) => r.data),
+  create: (data: Omit<Knowledge, 'id' | 'updatedAt'>) => api.post<Knowledge>('/api/admin/knowledge', data).then((r) => r.data),
+  update: (id: string, data: Partial<Knowledge>) => api.put<Knowledge>(`/api/admin/knowledge/${id}`, data).then((r) => r.data),
+  delete: (id: string) => api.delete(`/api/admin/knowledge/${id}`).then((r) => r.data),
+};
+
 export const logsService = {
   get: () => api.get<{ logs: any[], timestamp: string }>('/api/admin/logs').then((r) => r.data),
+  clear: () => api.delete<{ success: true }>('/api/admin/logs').then((r) => r.data),
 };

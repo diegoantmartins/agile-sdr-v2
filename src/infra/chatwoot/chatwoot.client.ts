@@ -53,12 +53,21 @@ export class ChatwootClient {
 
     // Interceptors
     this.client.interceptors.response.use(
-      response => response,
+      response => {
+        logger.debug('[CHATWOOT] Response:', {
+          status: response.status,
+          method: response.config.method?.toUpperCase(),
+          url: response.config.url,
+          data: response.data
+        });
+        return response;
+      },
       error => {
         logger.error('[CHATWOOT] Error:', {
           status: error.response?.status,
           message: error.response?.data?.message || error.message,
-          url: error.config?.url
+          url: error.config?.url,
+          data: error.response?.data
         });
         throw error;
       }

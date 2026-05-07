@@ -212,6 +212,13 @@ Customização do Cliente: {{customPrompt}}`
       const agileIntentResult = await this.intentClassifier.classifyAgile(messageContent);
       const intent = agileIntentResult.intent;
 
+      logger.info(`[AgentOrchestrator] Intenção detectada para ${phone}: ${intent}`, {
+        confidence: agileIntentResult.confidence,
+        reasoning: agileIntentResult.reasoning,
+        pivotProduct: agileIntentResult.pivotProduct,
+        triggeredKeywords: agileIntentResult.triggeredKeywords
+      });
+
       // 4. Aplicar Etiquetas (Labels) no Chatwoot
       if (agentConfig.sendToChatwoot) {
         const labels: string[] = [
@@ -249,9 +256,14 @@ Customização do Cliente: {{customPrompt}}`
         );
       }
 
-      // 5. Se intenção for HANDOFF_HUMANO, podemos decidir parar aqui ou gerar resposta de transbordo
-      // Para Agile Steel, o ResponseGenerator já tem regras de transbordo no prompt.
-      
+      // 5. Obter Base de Conhecimento (Produtos/Empresa)
+      const knowledgeItems = await prisma.knowledge.findMany({
+        take: 20 // Pegar os mais recentes/importantes
+      });
+      const knowledgeContext = knowledgeItems
+        .map(k => `[${k.category}] ${k.title}: ${k.content}`)
+        .join('\n');
+
       // 6. Gerar resposta via LLM
       this.responseGenerator = new ResponseGenerator(
         config.OPENAI_API_KEY || '',
@@ -271,7 +283,8 @@ Customização do Cliente: {{customPrompt}}`
         intent: genIntent,
         score: lead.score,
         source: lead.source,
-        conversationStage: lead.conversionStage ?? undefined
+        conversationStage: lead.conversionStage ?? undefined,
+        knowledgeContext: knowledgeContext
       });
 
       // 4. Auditoria via GovernanceAudit
@@ -310,7 +323,7 @@ Customização do Cliente: {{customPrompt}}`
           try {
             await chatService.openConversation(phone);
             await chatService.addLabels(phone, [`score-${newScore}`]);
-            await chatService.addPrivateNote(phone, `🚀 [HANDOFF] Lead ${lead.name} atingiu maturidade de venda (Score: ${newScore}/100). IA encerrou qualificação.`);
+            await chatService.addPrivateNote(phone, `[HANDOFF] Lead ${lead.name} atingiu maturidade de venda (Score: ${newScore}/100). IA encerrou qualificacao. Encaminhar para ${agentConfig.handoffTargetName}.`);
             logger.info(`[AgentOrchestrator] 💰 Lead ${phone} transbordado para humano no Chatwoot com score ${newScore}`);
           } catch (chatError) {
             logger.error(`[AgentOrchestrator] Erro ao notificar Chatwoot sobre o handoff: ${chatError}`);
