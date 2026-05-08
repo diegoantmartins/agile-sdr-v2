@@ -104,6 +104,21 @@ export class ChatwootService {
   }
 
   /**
+   * Atribuir conversa via telefone
+   */
+  async assignConversation(phone: string, assigneeId?: number, teamId?: number): Promise<boolean> {
+    try {
+      const contact = await this.chatClient.getOrCreateContact(phone);
+      const conversation = await this.chatClient.getOrCreateConversation(contact.id);
+      await this.chatClient.assignConversation(conversation.id, assigneeId, teamId);
+      return true;
+    } catch (error: any) {
+      logger.error('[ChatwootService] Erro ao atribuir conversa:', { phone, error: error.message });
+      return false;
+    }
+  }
+
+  /**
    * Adicionar nota privada para a equipe no Chatwoot
    */
   async addPrivateNote(phone: string, content: string): Promise<boolean> {
@@ -128,6 +143,36 @@ export class ChatwootService {
       logger.error('[ChatwootService] Erro ao testar conexão:', error.message);
       return false;
     }
+  }
+
+  /**
+   * Inicializar etiquetas padrão no Chatwoot
+   */
+  async initializeDefaultLabels(): Promise<void> {
+    const defaultLabels = [
+      { title: 'Atendimento Humano 🙋‍♂️', color: '#FF0000' },
+      { title: 'Em Análise 💬', color: '#3B82F6' },
+      { title: 'Fechado Concorrente 🚫', color: '#9CA3AF' },
+      { title: 'Sem Frente de Trabalho ⏳', color: '#FCD34D' },
+      { title: 'Licitação Perdida 📉', color: '#64748B' },
+      { title: 'Triagem 📋', color: '#10B981' },
+      { title: 'Oportunidade Real 💰', color: '#10B981' },
+      { title: 'Pivotagem Necessária 🔄', color: '#8B5CF6' },
+      { title: 'atendimento-humano', color: '#FF0000' },
+      { title: 'urgente', color: '#FF0000' }
+    ];
+
+    logger.info('[ChatwootService] Inicializando etiquetas padrão...');
+    
+    for (const label of defaultLabels) {
+      try {
+        await this.chatClient.createAccountLabel(label.title, label.color);
+      } catch (err) {
+        // Ignorar erros individuais
+      }
+    }
+    
+    logger.info('[ChatwootService] Etiquetas inicializadas.');
   }
 }
 

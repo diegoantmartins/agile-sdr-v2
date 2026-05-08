@@ -49,7 +49,7 @@ export class AgentOrchestrator {
       sendToSlack: false,
       disallowedTerms: [],
       // Agile Specifics
-      handoffLabels: ['agile-handoff', 'urgente'],
+      handoffLabels: ['atendimento-humano', 'urgente'],
       handoffTargetName: 'Daisy',
       pivotProducts: ['pisos vinílicos', 'forro acústico', 'steel frame'],
       primaryProduct: 'Drywall',
@@ -222,8 +222,8 @@ Customização do Cliente: {{customPrompt}}`
       // 4. Aplicar Etiquetas (Labels) no Chatwoot
       if (agentConfig.sendToChatwoot) {
         const labels: string[] = [
-          `agile-intent-${intent.toLowerCase()}`,
-          `score-${lead.score}`
+          `Intenção: ${this.translateIntent(intent)}`,
+          `Score: ${lead.score}`
         ];
         
         // Mapeamento extra de criticidade e etiquetas configuradas
@@ -231,22 +231,22 @@ Customização do Cliente: {{customPrompt}}`
           labels.push(...agentConfig.handoffLabels);
         }
         if (intent === 'SERVICO_FECHADO') {
-          labels.push('agile-pivot');
+          labels.push('Pivotagem Necessária 🔄');
         }
-        if (intent === 'BUY_NOW' as any) labels.push('agile-oportunidade');
+        if (intent === 'BUY_NOW' as any) labels.push('Oportunidade Real 💰');
         
         // Detecção dinâmica de produtos baseada na config
         const msgLower = messageContent.toLowerCase();
         
         // Produto principal
         if (msgLower.includes(agentConfig.primaryProduct.toLowerCase())) {
-          labels.push(`produto-${agentConfig.primaryProduct.toLowerCase().replace(/\s+/g, '-')}`);
+          labels.push(`Produto: ${agentConfig.primaryProduct.trim()}`);
         }
         
         // Produtos de pivotagem
         for (const product of agentConfig.pivotProducts) {
           if (msgLower.includes(product.toLowerCase())) {
-            labels.push(`produto-${product.toLowerCase().replace(/\s+/g, '-')}`);
+            labels.push(`Produto: ${product.trim()}`);
           }
         }
         
@@ -322,9 +322,10 @@ Customização do Cliente: {{customPrompt}}`
         if (agentConfig.sendToChatwoot) {
           try {
             await chatService.openConversation(phone);
-            await chatService.addLabels(phone, [`score-${newScore}`]);
-            await chatService.addPrivateNote(phone, `[HANDOFF] Lead ${lead.name} atingiu maturidade de venda (Score: ${newScore}/100). IA encerrou qualificacao. Encaminhar para ${agentConfig.handoffTargetName}.`);
-            logger.info(`[AgentOrchestrator] 💰 Lead ${phone} transbordado para humano no Chatwoot com score ${newScore}`);
+            await chatService.addLabels(phone, [`Score: ${newScore}`]);
+            await chatService.assignConversation(phone, agentConfig.handoffAgentId, agentConfig.handoffTeamId);
+            await chatService.addPrivateNote(phone, `[HANDOFF] Lead ${lead.name} atingiu maturidade de venda (Score: ${newScore}/100). IA encerrou qualificacao. Encaminhado para a Equipe Comercial (Diego Martins).`);
+            logger.info(`[AgentOrchestrator] 💰 Lead ${phone} transbordado para Diego Martins no Chatwoot com score ${newScore}`);
           } catch (chatError) {
             logger.error(`[AgentOrchestrator] Erro ao notificar Chatwoot sobre o handoff: ${chatError}`);
           }
@@ -379,5 +380,17 @@ Customização do Cliente: {{customPrompt}}`
       logger.error('[AgentOrchestrator] ❌ Erro ao processar:', error);
       throw error;
     }
+  }
+
+  private translateIntent(intent: AgileIntent): string {
+    const map: Record<AgileIntent, string> = {
+      'HANDOFF_HUMANO': 'Atendimento Humano 🙋‍♂️',
+      'FOLLOW_UP_NORMAL': 'Em Análise 💬',
+      'SERVICO_FECHADO': 'Fechado Concorrente 🚫',
+      'OBRA_SEM_FRENTE': 'Sem Frente de Trabalho ⏳',
+      'LICITACAO_PERDIDA': 'Licitação Perdida 📉',
+      'TRIAGE': 'Triagem 📋'
+    };
+    return map[intent] || intent;
   }
 }

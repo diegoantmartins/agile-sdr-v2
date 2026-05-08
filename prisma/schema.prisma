@@ -135,28 +135,28 @@ model SystemHealth {
 }
 
 model ActiveLead {
-  id                String      @id @default(uuid())
-  tenantId          String
-  phone             String
-  name              String
-  email             String?
-  company           String?
-  source            String      @default("whatsapp")
-  campaignId        String?
-  metadata          Json?
-  score             Int         @default(0)
-  status            LeadStatus  @default(TRIAGE)
-  intentClassified  IntentType?
-  conversionStage   String?
-  messageCount      Int         @default(0)
-  lastMessageAt     DateTime?
-  chatwootContactId String?
-  chatwootConvId    String?
-  createdAt         DateTime    @default(now())
-  updatedAt         DateTime    @updatedAt
-  messages          Message[]   @relation("LeadMessages")
-  notes             Note[]
+  id                  String               @id @default(uuid())
+  tenantId            String
+  phone               String
+  name                String
+  email               String?
+  company             String?
+  source              String               @default("whatsapp")
+  campaignId          String?
+  metadata            Json?
+  score               Int                  @default(0)
+  status              LeadStatus           @default(TRIAGE)
+  intentClassified    IntentType?
+  conversionStage     String?
+  messageCount        Int                  @default(0)
+  lastMessageAt       DateTime?
+  chatwootContactId   String?
+  chatwootConvId      String?
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
   conversationMetrics ConversationMetric[]
+  messages            Message[]            @relation("LeadMessages")
+  notes               Note[]
 
   @@unique([tenantId, phone], name: "tenant_phone_unique")
   @@index([tenantId])
@@ -206,16 +206,28 @@ model Note {
 }
 
 model ConversationMetric {
-  id               String   @id @default(uuid())
+  id               String     @id @default(uuid())
   leadId           String
+  messageCount     Int        @default(0)
+  userMessageCount Int        @default(0)
+  aiMessageCount   Int        @default(0)
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
   lead             ActiveLead @relation(fields: [leadId], references: [id], onDelete: Cascade)
-  messageCount     Int      @default(0)
-  userMessageCount Int      @default(0)
-  aiMessageCount   Int      @default(0)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
 
   @@index([leadId])
+}
+
+model Knowledge {
+  id        String   @id @default(uuid())
+  title     String
+  content   String
+  category  String?  @default("product")
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([category])
 }
 
 enum JobStatus {
@@ -248,16 +260,4 @@ enum SyncStatus {
   PENDING
   SYNCED
   FAILED
-}
-
-model Knowledge {
-  id        String   @id @default(uuid())
-  title     String
-  content   String
-  category  String?  @default("product")
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([category])
 }

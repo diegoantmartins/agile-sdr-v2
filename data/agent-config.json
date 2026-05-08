@@ -21,9 +21,11 @@
   "sendToChatwoot": true,
   "sendToSlack": false,
   "disallowedTerms": [],
-  "handoffLabels": ["agile-handoff", "urgente"],
-  "handoffTargetName": "Daisy",
+  "handoffLabels": ["atendimento-humano", "urgente"],
+  "handoffTargetName": "Diego Martins",
   "pivotProducts": ["pisos vinílicos", "forro acústico", "steel frame"],
   "primaryProduct": "Drywall",
-  "enableDdiLanguageDetection": true
+  "enableDdiLanguageDetection": true,
+  "handoffTeamId": 1,
+  "handoffAgentId": 3
 }

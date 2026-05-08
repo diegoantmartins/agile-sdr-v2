@@ -183,16 +183,56 @@ export class WebhookHandler {
 
     const data = extractOutgoingMessageData(payload);
     if (!data) {
+      logger.warn({ payload }, '[Webhook:Chatwoot] Could not extract data from payload');
       return reply.code(400).send({ error: 'Invalid chatwoot payload' });
     }
 
     try {
+      // 1. Forward to WhatsApp (UAZAPI)
       await whatsappProvider.sendText(data.phone, data.content);
       logger.info({ phone: data.phone }, '[Webhook:Chatwoot] Outgoing message forwarded to UAZAPI');
+
+      // 2. Persist in Database for AI Context
+      const tenantId = (request.headers['x-tenant-id'] as string)?.trim() || 'synapsea';
+      
+      const lead = await prisma.activeLead.findFirst({
+        where: { tenantId, phone: data.phone }
+      });
+
+      if (lead) {
+        // Save outgoing message
+        await prisma.message.create({
+          data: {
+            leadId: lead.id,
+            tenantId,
+            direction: 'outgoing',
+            content: data.content,
+            channel: 'whatsapp',
+            isAiGenerated: false, // It's a human agent
+            rawPayload: payload
+          }
+        });
+
+        // Update lead: Set status to HUMAN_REQUIRED and update timestamp
+        // This ensures the AI agent stays silent while a human is interacting
+        await prisma.activeLead.update({
+          where: { id: lead.id },
+          data: {
+            status: 'HUMAN_REQUIRED',
+            lastMessageAt: new Date(),
+            messageCount: { increment: 1 }
+          }
+        });
+
+        logger.info({ phone: data.phone, leadId: lead.id }, '[Webhook:Chatwoot] Persisted human response and updated lead status');
+      } else {
+        logger.warn({ phone: data.phone }, '[Webhook:Chatwoot] Lead not found in DB for persistence');
+      }
+
       return reply.code(200).send({ success: true });
-    } catch (error) {
-      logger.error({ error }, '[Webhook:Chatwoot] Failed to forward outgoing message');
-      return reply.code(500).send({ error: 'Failed to forward message' });
+    } catch (error: any) {
+      logger.error({ error: error.message, phone: data?.phone }, '[Webhook:Chatwoot] Failed to handle outgoing message');
+      return reply.code(500).send({ error: 'Failed to process chatwoot webhook' });
     }
   }
 

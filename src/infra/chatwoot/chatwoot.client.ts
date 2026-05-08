@@ -236,6 +236,33 @@ export class ChatwootClient {
   }
 
   /**
+   * Criar uma etiqueta no nível da conta (global)
+   */
+  async createAccountLabel(title: string, color: string = '#3B82F6', description: string = ''): Promise<any> {
+    try {
+      logger.debug('[CHATWOOT] Criando etiqueta na conta', { title, color });
+      const response = await this.client.post(
+        `/api/v1/accounts/${this.accountId}/labels`,
+        {
+          title,
+          color,
+          description,
+          show_on_sidebar: true
+        }
+      );
+      return response.data;
+    } catch (error: any) {
+      // Se a etiqueta já existir, o Chatwoot retorna 422. Ignoramos nesse caso.
+      if (error.response?.status === 422) {
+        logger.debug('[CHATWOOT] Etiqueta já existe', { title });
+        return null;
+      }
+      logger.error('[CHATWOOT] Erro ao criar etiqueta na conta:', error.message);
+      throw error;
+    }
+  }
+
+  /**
    * Alterar status da conversa (open, resolved, pending, snoozed)
    */
   async toggleStatus(conversationId: number, status: 'open' | 'resolved' | 'pending' | 'snoozed'): Promise<any> {
@@ -248,6 +275,30 @@ export class ChatwootClient {
       return response.data;
     } catch (error: any) {
       logger.error('[CHATWOOT] Erro ao alterar status:', error.message);
+      throw error;
+    }
+  }
+
+  /**
+   * Atribuir conversa a um agente e/ou equipe
+   */
+  async assignConversation(
+    conversationId: number,
+    assigneeId?: number,
+    teamId?: number
+  ): Promise<any> {
+    try {
+      logger.debug('[CHATWOOT] Atribuindo conversa', { conversationId, assigneeId, teamId });
+      const response = await this.client.post(
+        `/api/v1/accounts/${this.accountId}/conversations/${conversationId}/assignments`,
+        {
+          assignee_id: assigneeId,
+          team_id: teamId
+        }
+      );
+      return response.data;
+    } catch (error: any) {
+      logger.error('[CHATWOOT] Erro ao atribuir conversa:', error.message);
       throw error;
     }
   }

@@ -36,6 +36,8 @@ export interface AgentRuntimeConfig {
   pivotProducts: string[];
   primaryProduct: string;
   enableDdiLanguageDetection: boolean;
+  handoffTeamId?: number;
+  handoffAgentId?: number;
 }
 
 export class AgentConfigStore {
@@ -111,11 +113,13 @@ export class AgentConfigStore {
       disallowedTerms,
 
       // Agile Specifics
-      handoffLabels: Array.isArray(merged.handoffLabels) ? merged.handoffLabels.map(v => String(v).trim()).filter(Boolean) : ['agile-handoff', 'urgente'],
+      handoffLabels: Array.isArray(merged.handoffLabels) ? merged.handoffLabels.map(v => String(v).trim()).filter(Boolean) : ['atendimento-humano', 'urgente'],
       handoffTargetName: String(merged.handoffTargetName || 'Daisy').trim(),
       pivotProducts: Array.isArray(merged.pivotProducts) ? merged.pivotProducts.map(v => String(v).trim()).filter(Boolean) : ['pisos vinílicos', 'forro acústico', 'steel frame'],
       primaryProduct: String(merged.primaryProduct || 'Drywall').trim(),
-      enableDdiLanguageDetection: merged.enableDdiLanguageDetection !== undefined ? Boolean(merged.enableDdiLanguageDetection) : true
+      enableDdiLanguageDetection: merged.enableDdiLanguageDetection !== undefined ? Boolean(merged.enableDdiLanguageDetection) : true,
+      handoffTeamId: merged.handoffTeamId ? Number(merged.handoffTeamId) : 1,
+      handoffAgentId: merged.handoffAgentId ? Number(merged.handoffAgentId) : 3
     };
   }
 
