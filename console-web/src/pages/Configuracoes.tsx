@@ -129,8 +129,16 @@ export default function Configuracoes() {
               </Grid>
               <Grid item xs={12} md={6}>
                 <Typography variant="h6" fontWeight={600} mb={2}>Webhook ChatWoot</Typography>
-                <TextField label="ChatWoot URL" fullWidth sx={{ mb: 2 }} placeholder="https://app.chatwoot.com/..." />
-                <TextField label="Webhook Secret" fullWidth type="password" placeholder="Segredo 配置" />
+                <TextField label="ChatWoot URL" fullWidth sx={{ mb: 2 }} value={config.chatwootUrl as string || ''} onChange={(e) => setConfig({ ...config, chatwootUrl: e.target.value })} placeholder="https://app.chatwoot.com/..." />
+                <Grid container spacing={2}>
+                  <Grid item xs={6}>
+                    <TextField label="ID da Equipe (Handoff)" fullWidth type="number" sx={{ mb: 2 }} value={config.handoffTeamId as number || ''} onChange={(e) => setConfig({ ...config, handoffTeamId: parseInt(e.target.value) })} />
+                  </Grid>
+                  <Grid item xs={6}>
+                    <TextField label="ID do Agente (Handoff)" fullWidth type="number" sx={{ mb: 2 }} value={config.handoffAgentId as number || ''} onChange={(e) => setConfig({ ...config, handoffAgentId: parseInt(e.target.value) })} />
+                  </Grid>
+                </Grid>
+                <TextField label="Webhook Secret" fullWidth type="password" placeholder="Segredo de Verificação" />
               </Grid>
             </Grid>
           )}

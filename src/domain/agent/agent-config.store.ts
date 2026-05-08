@@ -1,5 +1,6 @@
 import { promises as fs } from 'fs';
 import path from 'path';
+import { env } from '../../config/env';
 
 export interface AgentRuntimeConfig {
   // Core
@@ -38,6 +39,7 @@ export interface AgentRuntimeConfig {
   enableDdiLanguageDetection: boolean;
   handoffTeamId?: number;
   handoffAgentId?: number;
+  intentLabels?: Record<string, string>;
 }
 
 export class AgentConfigStore {
@@ -118,8 +120,19 @@ export class AgentConfigStore {
       pivotProducts: Array.isArray(merged.pivotProducts) ? merged.pivotProducts.map(v => String(v).trim()).filter(Boolean) : ['pisos vinílicos', 'forro acústico', 'steel frame'],
       primaryProduct: String(merged.primaryProduct || 'Drywall').trim(),
       enableDdiLanguageDetection: merged.enableDdiLanguageDetection !== undefined ? Boolean(merged.enableDdiLanguageDetection) : true,
-      handoffTeamId: merged.handoffTeamId ? Number(merged.handoffTeamId) : 1,
-      handoffAgentId: merged.handoffAgentId ? Number(merged.handoffAgentId) : 3
+      handoffTeamId: merged.handoffTeamId ? Number(merged.handoffTeamId) : (env.CHATWOOT_HANDOFF_TEAM_ID || 1),
+      handoffAgentId: merged.handoffAgentId ? Number(merged.handoffAgentId) : (env.CHATWOOT_HANDOFF_AGENT_ID || 3),
+      intentLabels: (typeof merged.intentLabels === 'object' && merged.intentLabels !== null) 
+        ? merged.intentLabels as Record<string, string>
+        : {
+            'Handoff': 'Atendimento Humano 🙋‍♂️',
+            'Qualified': 'Qualificado ✅',
+            'Lead': 'Lead 👤',
+            'Unqualified': 'Desqualificado ❌',
+            'Neutral': 'Em Análise 💬',
+            'Support': 'Suporte 🛠️',
+            'Triagem': 'Triagem 📋'
+          }
     };
   }
 

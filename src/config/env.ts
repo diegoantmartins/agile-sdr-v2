@@ -18,6 +18,8 @@ const envSchema = z.object({
   CHATWOOT_API_TOKEN: z.string().optional(),
   CHATWOOT_ACCOUNT_ID: z.string().optional(),
   CHATWOOT_WEBHOOK_SECRET: z.string().optional(),
+  CHATWOOT_HANDOFF_TEAM_ID: z.coerce.number().optional(),
+  CHATWOOT_HANDOFF_AGENT_ID: z.coerce.number().optional(),
   
   // Intelligence
   OPENAI_API_KEY: z.string().optional(),

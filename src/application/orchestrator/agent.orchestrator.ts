@@ -222,7 +222,7 @@ Customização do Cliente: {{customPrompt}}`
       // 4. Aplicar Etiquetas (Labels) no Chatwoot
       if (agentConfig.sendToChatwoot) {
         const labels: string[] = [
-          `Intenção: ${this.translateIntent(intent)}`,
+          this.translateIntent(intent, agentConfig),
           `Score: ${lead.score}`
         ];
         
@@ -382,14 +382,15 @@ Customização do Cliente: {{customPrompt}}`
     }
   }
 
-  private translateIntent(intent: AgileIntent): string {
-    const map: Record<AgileIntent, string> = {
-      'HANDOFF_HUMANO': 'Atendimento Humano 🙋‍♂️',
-      'FOLLOW_UP_NORMAL': 'Em Análise 💬',
-      'SERVICO_FECHADO': 'Fechado Concorrente 🚫',
-      'OBRA_SEM_FRENTE': 'Sem Frente de Trabalho ⏳',
-      'LICITACAO_PERDIDA': 'Licitação Perdida 📉',
-      'TRIAGE': 'Triagem 📋'
+  private translateIntent(intent: string, agentConfig: any): string {
+    const map = agentConfig.intentLabels || {
+      'Handoff': 'Atendimento Humano 🙋‍♂️',
+      'Qualified': 'Qualificado ✅',
+      'Lead': 'Lead 👤',
+      'Unqualified': 'Desqualificado ❌',
+      'Neutral': 'Em Análise 💬',
+      'Support': 'Suporte 🛠️',
+      'Triagem': 'Triagem 📋'
     };
     return map[intent] || intent;
   }
