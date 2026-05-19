@@ -65,6 +65,11 @@ export class UAZAPIClient {
    * Enviar mensagem de texto via WhatsApp
    */
   async sendMessage(payload: UAZAPIMessagePayload): Promise<UAZAPIResponse> {
+    if (!config.UAZAPI_ENABLED) {
+      logger.info('[UAZAPI] Integração desativada. Ignorando envio de mensagem.');
+      return { success: true, messageId: 'disabled-mock-id' };
+    }
+
     try {
       logger.debug('[UAZAPI] Enviando mensagem', { phone: payload.phone });
 
@@ -96,6 +101,11 @@ export class UAZAPIClient {
    * Enviar imagem via WhatsApp
    */
   async sendImage(phone: string, imageUrl: string, caption?: string): Promise<UAZAPIResponse> {
+    if (!config.UAZAPI_ENABLED) {
+      logger.info('[UAZAPI] Integração desativada. Ignorando envio de imagem.');
+      return { success: true, messageId: 'disabled-mock-id' };
+    }
+
     try {
       logger.debug('[UAZAPI] Enviando imagem', { phone, imageUrl });
 
@@ -123,6 +133,11 @@ export class UAZAPIClient {
    * Enviar documento via WhatsApp
    */
   async sendDocument(phone: string, documentUrl: string, filename?: string): Promise<UAZAPIResponse> {
+    if (!config.UAZAPI_ENABLED) {
+      logger.info('[UAZAPI] Integração desativada. Ignorando envio de documento.');
+      return { success: true, messageId: 'disabled-mock-id' };
+    }
+
     try {
       logger.debug('[UAZAPI] Enviando documento', { phone, documentUrl });
 
@@ -171,6 +186,7 @@ export class UAZAPIClient {
    * Health check da API UAZAPI
    */
   async healthCheck(): Promise<boolean> {
+    if (!config.UAZAPI_ENABLED) return false;
     try {
       const response = await this.client.get('/status', {
         timeout: 5000

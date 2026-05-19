@@ -1,0 +1,184 @@
+{
+  "name": "Agile SDR - Outbound/Reactivation",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": "={{ $json.rule }}"
+      },
+      "id": "trigger-schedule",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [ 100, 300 ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT b.id as budget_id, b.\"productName\", b.\"projectName\", b.\"budgetDate\", c.id as contact_id, c.name, c.phone \nFROM \"Budget\" b \nJOIN \"Contact\" c ON b.\"contactId\" = c.id \nWHERE b.status = 'approved' \nAND b.\"budgetDate\" < NOW() - INTERVAL '7 days'\nAND NOT EXISTS (\n  SELECT 1 FROM \"Opportunity\" o WHERE o.\"budgetId\" = b.id\n)\nLIMIT 10",
+        "additionalFields": {}
+      },
+      "id": "db-find-candidates",
+      "name": "Find Candidates",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 1,
+      "position": [ 300, 300 ],
+      "credentials": {
+        "postgresql": {
+          "id": "replace_with_postgres_cred_id"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "Você é o Agile SDR. Sua tarefa é reativar um cliente que fez um orçamento de {{ $json.productName }} para o projeto {{ $json.projectName }} em {{ $json.budgetDate }}.\n\nSeja amigável e pergunte como está o andamento da obra ou se ele precisa de algo mais.\n\nNome do Cliente: {{ $json.name }}\nMáximo 400 caracteres."
+        }
+      },
+      "id": "ai-agent-outbound",
+      "name": "Outbound AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.4,
+      "position": [ 550, 300 ]
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o-mini",
+        "options": {}
+      },
+      "id": "openai-node-outbound",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [ 550, 450 ],
+      "credentials": {
+        "openAiApi": {
+          "id": "replace_with_openai_cred_id"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://synapsea.uazapi.com/message/send",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "9dc5f082-d000-46a3-8fe3-6161fb2426a5"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "phone",
+              "value": "={{ $json.phone }}"
+            },
+            {
+              "name": "message",
+              "value": "={{ $node[\"Outbound AI Agent\"].json.output }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "uazapi-send-outbound",
+      "name": "Send WhatsApp",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [ 800, 300 ]
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "table": {
+          "__fixedNodes-key": "Opportunity"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "budgetId": "={{ $json.budget_id }}",
+            "contactId": "={{ $json.contact_id }}",
+            "stage": "reactivation_sent",
+            "priorityScore": 50,
+            "reactivationReason": "Auto-reactivation n8n"
+          }
+        },
+        "options": {}
+      },
+      "id": "db-create-opp",
+      "name": "Create Opportunity",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 1,
+      "position": [ 1000, 300 ],
+      "credentials": {
+        "postgresql": {
+          "id": "replace_with_postgres_cred_id"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Find Candidates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Candidates": {
+      "main": [
+        [
+          {
+            "node": "Outbound AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Outbound AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Outbound AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Send WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send WhatsApp": {
+      "main": [
+        [
+          {
+            "node": "Create Opportunity",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null
+}

@@ -2,12 +2,14 @@
 
 import { getChatClient } from '../infra/chatwoot/chatwoot.client';
 import { logger } from '../shared/utils/logger';
+import { env } from '../config/env';
 
 export interface SyncMessagePayload {
   phone: string;
   name?: string;
   message: string;
   messageType?: 'incoming' | 'outgoing';
+  leadId?: string;
 }
 
 export class ChatwootService {
@@ -22,51 +24,77 @@ export class ChatwootService {
     messageId?: number;
     error?: string;
   }> {
+    if (!env.CHATWOOT_ENABLED) {
+      logger.info('[ChatwootService] Integração desativada. Ignorando sincronização.');
+      return { success: true };
+    }
+
     try {
-      const { phone, name, message, messageType = 'incoming' } = payload;
+      const { phone, name, message, messageType = 'incoming', leadId } = payload;
+      const { prisma } = await import('../shared/db');
 
-      logger.debug('[ChatwootService] Sincronizando mensagem', { phone, messageType });
+      logger.debug('[ChatwootService] Sincronizando mensagem', { phone, messageType, leadId });
 
-      // 1. Obter ou criar contato
-      const contact = await this.chatClient.getOrCreateContact(phone, name);
-      logger.debug('[ChatwootService] Contato obtido/criado', { contactId: contact.id, phone });
+      let contactId: number | undefined;
+      let conversationId: number | undefined;
 
-      // 2. Obter ou criar conversa
-      const conversation = await this.chatClient.getOrCreateConversation(contact.id);
-      logger.debug('[ChatwootService] Conversa obtida/criada', {
-        conversationId: conversation.id,
-        contactId: contact.id
-      });
+      // 1. Tentar obter IDs do banco de dados primeiro
+      if (leadId) {
+        const lead = await prisma.activeLead.findUnique({ where: { id: leadId } });
+        if (lead?.chatwootContactId) contactId = parseInt(lead.chatwootContactId);
+        if (lead?.chatwootConvId) conversationId = parseInt(lead.chatwootConvId);
+      }
 
-      // 3. Enviar mensagem
+      // 2. Obter ou criar contato se necessário
+      if (!contactId) {
+        const contact = await this.chatClient.getOrCreateContact(phone, name);
+        contactId = contact.id;
+        
+        if (leadId) {
+          await prisma.activeLead.update({
+            where: { id: leadId },
+            data: { chatwootContactId: String(contactId) }
+          });
+        }
+      }
+
+      // 3. Obter ou criar conversa se necessário
+      if (!conversationId) {
+        const conversation = await this.chatClient.getOrCreateConversation(contactId);
+        conversationId = conversation.id;
+
+        if (leadId) {
+          await prisma.activeLead.update({
+            where: { id: leadId },
+            data: { chatwootConvId: String(conversationId) }
+          });
+        }
+      }
+
+      // 4. Enviar mensagem
       const messageResponse = await this.chatClient.sendMessage(
-        conversation.id,
+        conversationId!,
         message,
         messageType
       );
 
       logger.info('[ChatwootService] Mensagem sincronizada com sucesso', {
         phone,
-        conversationId: conversation.id,
+        conversationId,
         messageId: messageResponse.id
       });
 
       return {
         success: true,
-        conversationId: conversation.id,
+        conversationId,
         messageId: messageResponse.id
       };
     } catch (error: any) {
       logger.error('[ChatwootService] Erro ao sincronizar mensagem:', {
         phone: payload.phone,
-        error: error.message,
-        status: error.response?.status
-      });
-
-      return {
-        success: false,
         error: error.message
-      };
+      });
+      return { success: false, error: error.message };
     }
   }
 
@@ -74,6 +102,7 @@ export class ChatwootService {
    * Adicionar etiquetas em uma conversa via telefone
    */
   async addLabels(phone: string, labels: string[]): Promise<boolean> {
+    if (!env.CHATWOOT_ENABLED) return true;
     try {
       logger.debug('[ChatwootService] Adicionando etiquetas', { phone, labels });
       
@@ -92,6 +121,7 @@ export class ChatwootService {
    * Abrir conversa no Chatwoot (mudar status para 'open')
    */
   async openConversation(phone: string): Promise<boolean> {
+    if (!env.CHATWOOT_ENABLED) return true;
     try {
       const contact = await this.chatClient.getOrCreateContact(phone);
       const conversation = await this.chatClient.getOrCreateConversation(contact.id);
@@ -107,6 +137,7 @@ export class ChatwootService {
    * Atribuir conversa via telefone
    */
   async assignConversation(phone: string, assigneeId?: number, teamId?: number): Promise<boolean> {
+    if (!env.CHATWOOT_ENABLED) return true;
     try {
       const contact = await this.chatClient.getOrCreateContact(phone);
       const conversation = await this.chatClient.getOrCreateConversation(contact.id);
@@ -122,6 +153,7 @@ export class ChatwootService {
    * Adicionar nota privada para a equipe no Chatwoot
    */
   async addPrivateNote(phone: string, content: string): Promise<boolean> {
+    if (!env.CHATWOOT_ENABLED) return true;
     try {
       const contact = await this.chatClient.getOrCreateContact(phone);
       const conversation = await this.chatClient.getOrCreateConversation(contact.id);
@@ -137,6 +169,7 @@ export class ChatwootService {
    * Testar conexão com Chatwoot
    */
   async testConnection(): Promise<boolean> {
+    if (!env.CHATWOOT_ENABLED) return false;
     try {
       return await this.chatClient.healthCheck();
     } catch (error: any) {

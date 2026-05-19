@@ -12,6 +12,7 @@ const envSchema = z.object({
   UAZAPI_URL: z.string().default('http://localhost:9999'),
   UAZAPI_KEY: z.string().default('dev-placeholder'),
   UAZAPI_WEBHOOK_SECRET: z.string().optional(),
+  UAZAPI_ENABLED: z.coerce.boolean().default(true),
   
   // Chatwoot (Handoff)
   CHATWOOT_URL: z.string().optional(),
@@ -20,6 +21,7 @@ const envSchema = z.object({
   CHATWOOT_WEBHOOK_SECRET: z.string().optional(),
   CHATWOOT_HANDOFF_TEAM_ID: z.coerce.number().optional(),
   CHATWOOT_HANDOFF_AGENT_ID: z.coerce.number().optional(),
+  CHATWOOT_ENABLED: z.coerce.boolean().default(true),
   
   // Intelligence
   OPENAI_API_KEY: z.string().optional(),
@@ -63,6 +65,9 @@ const envSchema = z.object({
   AGENT_TONE: z.string().default('consultivo e cordial'),
   AGENT_LANGUAGE: z.string().default('português do Brasil'),
   AGENT_MAX_REPLY_CHARS: z.coerce.number().default(420),
+  
+  // n8n Webhook Integration
+  N8N_WEBHOOK_URL: z.string().optional(),
 });
 
 export const env = envSchema.parse(process.env);

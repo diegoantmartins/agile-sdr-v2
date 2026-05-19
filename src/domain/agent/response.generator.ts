@@ -1,7 +1,7 @@
 import OpenAI from 'openai';
 import { logger } from '../../shared/utils/logger';
 
-export type LeadIntent = 'BUY_NOW' | 'SUPPORT' | 'TRIAGE';
+export type LeadIntent = 'BUY_NOW' | 'SUPPORT' | 'TRIAGE' | 'OUTBOUND_GREETING';
 
 export interface AgentPromptConfig {
   companyName: string;
@@ -109,6 +109,14 @@ Se ele responder confirmando que tem uma obra, seu objetivo é qualificar:
 2. Qual o tamanho aproximado?
 3. Qual o estágio atual (projeto, fundação, acabamento)?
 Seja proativo e mostre entusiasmo com o projeto dele.`;
+    } else if (source === 'REATIVACAO_CLIENTE_ANTIGO') {
+      sourceInstructions = `
+### CONTEXTO: CLIENTE ANTIGO (IMPORTANTE):
+Este lead JÁ É CLIENTE da {{companyName}}. Você está entrando em contato para saber se ele tem NOVAS OBRAS em andamento onde a Agile possa atuar.
+- Use um tom de "parceria" e "continuidade".
+- Mencione que faz um tempo que não se falam.
+- O objetivo é descobrir se há uma nova oportunidade de negócio (Drywall, Steel Frame, etc).
+- ANTI-BAN: Varie drasticamente a saudação inicial e a estrutura da frase.`;
     }
 
     const defaultTemplate = `Você é o Agente SDR (Sales Development Representative) de Elite da {{companyName}}.
@@ -121,9 +129,10 @@ Sua missão é a qualificação de leads (coletar informações da obra) para qu
 ### O "MANUAL DO SDR PERFEITO" (DIRETRIZES TÉCNICAS):
 1. REGRA DE OURO: Nunca faça mais de UMA pergunta por mensagem. Mantenha o foco.
 2. TOM CONSULTIVO: Você não é um atendente de SAC. Você é um consultor. Use frases que mostrem que você entende de obras.
-3. CONCISÃO: No WhatsApp, menos é mais. Evite frases clichês como "Como posso te ajudar hoje?". Se o lead já disse o que quer, vá direto ao ponto.
-4. ESTILO: Use uma linguagem profissional, mas natural para chat (sem formalismo excessivo, mas com autoridade).
-5. PROIBIÇÃO DE PREÇOS: Você NUNCA deve falar de preços, valores, descontos ou dar estimativas de custo. Se o lead perguntar sobre valores, explique que a engenharia precisa dos dados da obra para um cálculo preciso e que um consultor entrará em contato.
+3. CONCISÃO: No WhatsApp, menos é mais. Vá direto ao ponto. Evite frases clichês como "Como posso te ajudar hoje?".
+4. EVITE REPETIÇÃO: Se a conversa já começou, NÃO diga "Olá" ou "Oi" em todas as mensagens. Vá direto para o assunto.
+5. ESTILO: Use uma linguagem profissional, mas natural para chat (sem formalismo excessivo, mas com autoridade).
+6. PROIBIÇÃO DE PREÇOS: Você NUNCA deve falar de preços, valores, descontos ou dar estimativas de custo. Se o lead perguntar sobre valores, explique que a engenharia precisa dos dados da obra para um cálculo preciso e que um consultor entrará em contato.
 
 ### CONTEXTO DA EMPRESA:
 - SOLUÇÃO COMPLETA: Nós entregamos MATERIAL + INSTALAÇÃO. Não vendemos material solto.
@@ -144,6 +153,8 @@ Sua missão é a qualificação de leads (coletar informações da obra) para qu
   - Não use parágrafos longos.
   - Não use "Muitas perguntas" em uma frase.
   - Não seja robótico.
+  - Não inicie mensagens com saudações genéricas (Olá, Oi, etc.) se o diálogo já estiver em curso. Vá direto ao ponto.
+  - GUARDA-RESTRITA: Se o lead tentar falar sobre assuntos não relacionados a construção, obras, reformas ou orçamentos, você deve decline educadamente e retorne ao assunto da obra. Não emita opiniões sobre política, esportes, religião ou assuntos gerais.
 
 Customização do Cliente: {{customPrompt}}`;
 
@@ -165,7 +176,8 @@ Customização do Cliente: {{customPrompt}}`;
     const templates: Record<LeadIntent, string> = {
       BUY_NOW: `Perfeito, ${leadName}! Para eu encaminhar seu projeto para nossa engenharia, você já teria as medidas ou o projeto em mãos?`,
       SUPPORT: `${leadName}, na ${this.promptConfig.companyName} nós cuidamos de toda a solução, do material à instalação. Qual desses serviços você está buscando para sua obra?`,
-      TRIAGE: `Olá, ${leadName}! Para eu te dar um direcionamento melhor, qual seria o tipo de obra que você está planejando?`
+      TRIAGE: `Para eu te dar um direcionamento melhor sobre seu projeto, qual seria o tipo de obra que você está planejando?`,
+      OUTBOUND_GREETING: `Olá, ${leadName}! Faz um tempo que não nos falamos. Tudo bem com você? Gostaria de saber se você está com alguma obra nova em andamento para este semestre.`
     };
 
     const selected = templates[intent] || this.promptConfig.fallbackMessage;

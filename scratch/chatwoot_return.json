@@ -1,0 +1,115 @@
+{
+  "name": "Agile SDR - Chatwoot Return (Bot Mode)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "chatwoot-return",
+        "options": {}
+      },
+      "id": "webhook-chatwoot-return",
+      "name": "Chatwoot Events",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [ 100, 300 ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-1",
+              "leftValue": "={{ $json.body.event }}",
+              "rightValue": "conversation_resolved",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-resolved",
+      "name": "Is Resolved?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [ 300, 300 ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $json.body;\nlet phone = body.sender?.phone_number || body.conversation?.meta?.sender?.phone_number;\n\nif (!phone) return null;\n\nphone = phone.replace(/\\+/g, '').replace(/\\D/g, '');\nif (!phone.startsWith('55')) phone = '55' + phone;\n\nreturn {\n  phone\n};"
+      },
+      "id": "extract-phone",
+      "name": "Extract Phone",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [ 500, 300 ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE \"ActiveLead\" SET \"status\" = 'TRIAGE', \"updatedAt\" = NOW() WHERE \"phone\" = $1 AND \"tenantId\" = 'synapsea'",
+        "additionalFields": {
+          "queryParams": "={{ $json.phone }}"
+        }
+      },
+      "id": "db-set-bot",
+      "name": "Return to Bot Mode",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 1,
+      "position": [ 700, 300 ],
+      "credentials": {
+        "postgresql": {
+          "id": "replace_with_postgres_cred_id"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Chatwoot Events": {
+      "main": [
+        [
+          {
+            "node": "Is Resolved?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Resolved?": {
+      "main": [
+        [
+          {
+            "node": "Extract Phone",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Phone": {
+      "main": [
+        [
+          {
+            "node": "Return to Bot Mode",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null
+}

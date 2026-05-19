@@ -21,6 +21,10 @@ export class UazapiProvider implements WhatsAppProvider {
   }
 
   async sendText(phone: string, content: string): Promise<void> {
+    if (!env.UAZAPI_ENABLED) {
+      logger.info('[WhatsApp] Integração desativada. Ignorando envio.');
+      return;
+    }
     const normalizedPhone = this.normalizePhone(phone);
     
     try {

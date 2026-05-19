@@ -228,25 +228,29 @@ Customização do Cliente: {{customPrompt}}`
         
         // Mapeamento extra de criticidade e etiquetas configuradas
         if (intent === 'HANDOFF_HUMANO') {
-          labels.push(...agentConfig.handoffLabels);
+          labels.push('🚨 Urgente', '✅ Qualificado');
         }
         if (intent === 'SERVICO_FECHADO') {
-          labels.push('Pivotagem Necessária 🔄');
+          labels.push('🔄 Pivotagem Necessária');
         }
-        if (intent === 'BUY_NOW' as any) labels.push('Oportunidade Real 💰');
+        
+        // Temperatura baseada no Score
+        if (lead.score > 70) labels.push('🔥 Lead Quente');
+        else if (lead.score > 40) labels.push('🌡️ Lead Morno');
+        else labels.push('❄️ Lead Frio');
         
         // Detecção dinâmica de produtos baseada na config
         const msgLower = messageContent.toLowerCase();
         
         // Produto principal
         if (msgLower.includes(agentConfig.primaryProduct.toLowerCase())) {
-          labels.push(`Produto: ${agentConfig.primaryProduct.trim()}`);
+          labels.push(`🛠️ ${agentConfig.primaryProduct.trim()}`);
         }
         
         // Produtos de pivotagem
         for (const product of agentConfig.pivotProducts) {
           if (msgLower.includes(product.toLowerCase())) {
-            labels.push(`Produto: ${product.trim()}`);
+            labels.push(`📦 ${product.trim()}`);
           }
         }
         
@@ -256,11 +260,24 @@ Customização do Cliente: {{customPrompt}}`
         );
       }
 
-      // 5. Obter Base de Conhecimento (Produtos/Empresa)
+      // 5. Obter Base de Conhecimento Dinâmica (RAG)
+      // Tenta buscar palavras-chave na mensagem para filtrar o conhecimento
+      const keywords = messageContent.split(' ').filter(w => w.length > 3);
       const knowledgeItems = await prisma.knowledge.findMany({
-        take: 20 // Pegar os mais recentes/importantes
+        where: keywords.length > 0 ? {
+          OR: keywords.map(k => ({
+            content: { contains: k, mode: 'insensitive' }
+          }))
+        } : undefined,
+        take: 10
       });
-      const knowledgeContext = knowledgeItems
+
+      // Se não achar nada específico, pega os principais/gerais
+      const finalKnowledge = knowledgeItems.length > 0 
+        ? knowledgeItems 
+        : await prisma.knowledge.findMany({ take: 10 });
+
+      const knowledgeContext = finalKnowledge
         .map(k => `[${k.category}] ${k.title}: ${k.content}`)
         .join('\n');
 
@@ -383,15 +400,15 @@ Customização do Cliente: {{customPrompt}}`
   }
 
   private translateIntent(intent: string, agentConfig: any): string {
-    const map = agentConfig.intentLabels || {
-      'Handoff': 'Atendimento Humano 🙋‍♂️',
-      'Qualified': 'Qualificado ✅',
-      'Lead': 'Lead 👤',
-      'Unqualified': 'Desqualificado ❌',
-      'Neutral': 'Em Análise 💬',
-      'Support': 'Suporte 🛠️',
-      'Triagem': 'Triagem 📋'
+    const map: Record<string, string> = {
+      'HANDOFF_HUMANO': '🙋‍♂️ Atendimento Humano',
+      'QUALIFICADO': '✅ Qualificado',
+      'TRIAGEM': '📋 Triagem',
+      'DÚVIDA_TÉCNICA': '🛠️ Dúvida Técnica',
+      'SUPPORT': '🛠️ Suporte',
+      'NEUTRAL': '💬 Em Análise',
+      'FOLLOW_UP_NORMAL': '💬 Conversa Ativa'
     };
-    return map[intent] || intent;
+    return map[intent] || `💬 ${intent}`;
   }
 }

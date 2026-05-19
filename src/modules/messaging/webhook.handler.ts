@@ -97,7 +97,8 @@ export class WebhookHandler {
           phone: normalizedPhone,
           name: lead.name || 'Lead',
           message: message,
-          messageType: 'incoming'
+          messageType: 'incoming',
+          leadId: lead.id
         });
         logger.info(`${logTag} Incoming message synced to Chatwoot`);
       } catch (chatError) {
@@ -118,50 +119,49 @@ export class WebhookHandler {
       logger.info(`${logTag} Auto-reply enabled: ${autoReplyEnabled}`);
       
       if (autoReplyEnabled) {
-        logger.info(`${logTag} Processing with Agent Orchestrator...`);
+        logger.info(`${logTag} Processing incoming message...`);
         
         try {
-          // Use AgentOrchestrator to process and generate response
-          const response = await agentOrchestrator.processIncomingMessage(
-            tenantId,
-            normalizedPhone,
-            message
-          );
+          let response: string | null = null;
+          const n8nUrl = process.env.N8N_WEBHOOK_URL;
           
-          logger.info(`${logTag} Orchestrator response:`, response);
-
-          if (response) {
-            // Send response via WhatsApp
-            await whatsappProvider.sendText(normalizedPhone, response);
-            logger.info({ phone: phoneRaw, response }, `${logTag} Sent auto-reply`);
-            
-            // Save outgoing message
-            await prisma.message.create({
-              data: {
-                leadId: lead.id,
+          if (n8nUrl) {
+            logger.info(`${logTag} Forwarding to n8n Webhook: ${n8nUrl}`);
+            const fetchResponse = await fetch(n8nUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
                 tenantId,
-                direction: 'outgoing',
-                content: response,
-                channel: 'whatsapp',
-                isAiGenerated: true
-              }
-            });
-
-            // Sync with Chatwoot
-            try {
-              await chatService.syncMessage({
                 phone: normalizedPhone,
-                name: lead.name || 'Lead',
-                message: response,
-                messageType: 'outgoing'
-              });
-              logger.info(`${logTag} Synced to Chatwoot`);
-            } catch (chatError) {
-              logger.error({ error: chatError }, `${logTag} Failed to sync to Chatwoot`);
+                message,
+                leadName: lead.name,
+                leadStatus: lead.status
+              })
+            });
+            
+            if (!fetchResponse.ok) {
+              logger.error(`${logTag} n8n webhook returned status ${fetchResponse.status}`);
+            } else {
+              const responseData = await fetchResponse.json();
+              // Try to extract 'reply' or 'output' from JSON, or use it directly if it's a plain string
+              response = responseData?.reply || responseData?.output || (typeof responseData === 'string' ? responseData : null);
+              logger.info(`${logTag} n8n response received`);
             }
+          } else {
+            logger.warn(`${logTag} N8N_WEBHOOK_URL missing. Falling back to local AgentOrchestrator.`);
+            response = (await agentOrchestrator.processIncomingMessage(
+              tenantId,
+              normalizedPhone,
+              message
+            )) || null;
+            logger.info(`${logTag} Local Orchestrator response generated`);
+          }
+
+          if (response && typeof response === 'string') {
+            await this.sendAndSaveResponse(normalizedPhone, response, lead.id, tenantId, lead.name, logTag);
           }
         } catch (orchError) {
-          logger.error({ error: orchError }, `${logTag} Orchestrator error`);
+          logger.error({ error: orchError }, `${logTag} Orchestrator/n8n error`);
         }
       }
 
@@ -169,6 +169,38 @@ export class WebhookHandler {
     } catch (error) {
       logger.error({ error, phone: phoneRaw }, `${logTag} Failed to handle webhook`);
       return reply.code(500).send();
+    }
+  }
+
+  private async sendAndSaveResponse(phone: string, response: string, leadId: string, tenantId: string, leadName: string | null, logTag: string) {
+    // Send response via WhatsApp
+    await whatsappProvider.sendText(phone, response);
+    logger.info({ phone, response }, `${logTag} Sent auto-reply`);
+    
+    // Save outgoing message
+    await prisma.message.create({
+      data: {
+        leadId,
+        tenantId,
+        direction: 'outgoing',
+        content: response,
+        channel: 'whatsapp',
+        isAiGenerated: true
+      }
+    });
+
+    // Sync with Chatwoot
+    try {
+      await chatService.syncMessage({
+        phone,
+        name: leadName || 'Lead',
+        message: response,
+        messageType: 'outgoing',
+        leadId
+      });
+      logger.info(`${logTag} Synced to Chatwoot`);
+    } catch (chatError) {
+      logger.error({ error: chatError }, `${logTag} Failed to sync to Chatwoot`);
     }
   }
 

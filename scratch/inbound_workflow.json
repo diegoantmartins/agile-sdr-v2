@@ -1,0 +1,363 @@
+{
+  "name": "Agile SDR - Inbound Processor",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "agile-sdr-inbound",
+        "options": {}
+      },
+      "id": "webhook-1",
+      "name": "Webhook UAZAPI",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [ 100, 300 ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $json.body;\nconst phoneRaw = body.phone || body.chat?.phone?.replace(/\\D/g, '') || body.key?.remoteJid?.replace('@s.whatsapp.net', '') || body.from;\nconst message = body.message?.conversation || body.message?.extendedTextMessage?.text || body.message?.content || body.text || body.data?.body;\nconst name = body.pushName || body.notifyName || body.message?.senderName || body.data?.sender?.pushname;\n\n// Normalize phone\nlet phone = String(phoneRaw).replace(/\\D/g, '');\nif (!phone.startsWith('55') && phone.length === 11) phone = '55' + phone;\nelse if (!phone.startsWith('55')) phone = '55' + phone;\n\nreturn {\n  phone,\n  message,\n  name: name || 'Lead WhatsApp',\n  tenantId: 'synapsea',\n  raw: body\n};"
+      },
+      "id": "code-1",
+      "name": "Normalize Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [ 300, 300 ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM \"ActiveLead\" WHERE \"tenantId\" = 'synapsea' AND \"phone\" = $1 LIMIT 1",
+        "additionalFields": {
+          "queryParams": "={{ $json.phone }}"
+        }
+      },
+      "id": "db-select-lead",
+      "name": "Get Lead",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 1,
+      "position": [ 500, 300 ],
+      "credentials": {
+        "postgresql": {
+          "id": "replace_with_postgres_cred_id"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-1",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-lead-exists",
+      "name": "Lead Exists?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [ 700, 300 ]
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "table": {
+          "__fixedNodes-key": "ActiveLead"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "tenantId": "synapsea",
+            "phone": "={{ $node[\"Normalize Data\"].json.phone }}",
+            "name": "={{ $node[\"Normalize Data\"].json.name }}",
+            "source": "whatsapp",
+            "status": "TRIAGE"
+          }
+        },
+        "options": {}
+      },
+      "id": "db-create-lead",
+      "name": "Create Lead",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 1,
+      "position": [ 700, 500 ],
+      "credentials": {
+        "postgresql": {
+          "id": "replace_with_postgres_cred_id"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "Você é o Agile SDR, um assistente virtual de vendas consultivo.\n\nSua missão é qualificar leads e avançar para reunião ou proposta.\n\nDados do Lead:\nNome: {{ $json.name }}\nStatus Atual: {{ $json.status }}\n\nDiretrizes:\n- Seja cordial e consultivo.\n- Responda em português do Brasil.\n- Máximo de 400 caracteres."
+        }
+      },
+      "id": "ai-agent",
+      "name": "Agile SDR Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.4,
+      "position": [ 1000, 300 ]
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o-mini",
+        "options": {}
+      },
+      "id": "openai-node",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [ 1000, 450 ],
+      "credentials": {
+        "openAiApi": {
+          "id": "replace_with_openai_cred_id"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionId": "={{ $json.phone }}"
+      },
+      "id": "memory-node",
+      "name": "Conversation History",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1,
+      "position": [ 1150, 450 ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://synapsea.uazapi.com/message/send",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "9dc5f082-d000-46a3-8fe3-6161fb2426a5"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "phone",
+              "value": "={{ $node[\"Normalize Data\"].json.phone }}"
+            },
+            {
+              "name": "message",
+              "value": "={{ $json.output }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "uazapi-send",
+      "name": "Send WhatsApp",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [ 1300, 300 ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://connect.synapsea.com.br/api/v1/accounts/1/conversations/{{ $node[\"Get Lead\"].json.chatwootConvId || $node[\"Create Lead\"].json.chatwootConvId }}/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "api_access_token",
+              "value": "Z4pgqdwX9mZx6U1p6Um8TJgq"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "content",
+              "value": "={{ $node[\"Agile SDR Agent\"].json.output }}"
+            },
+            {
+              "name": "message_type",
+              "value": "outgoing"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "chatwoot-sync",
+      "name": "Sync Chatwoot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [ 1450, 450 ]
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "table": {
+          "__fixedNodes-key": "Message"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "leadId": "={{ $node[\"Get Lead\"].json.id || $node[\"Create Lead\"].json.id }}",
+            "tenantId": "synapsea",
+            "direction": "outgoing",
+            "content": "={{ $node[\"Agile SDR Agent\"].json.output }}",
+            "isAiGenerated": true
+          }
+        },
+        "options": {}
+      },
+      "id": "db-save-msg",
+      "name": "Save Message",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 1,
+      "position": [ 1650, 300 ],
+      "credentials": {
+        "postgresql": {
+          "id": "replace_with_postgres_cred_id"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook UAZAPI": {
+      "main": [
+        [
+          {
+            "node": "Normalize Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Data": {
+      "main": [
+        [
+          {
+            "node": "Get Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Lead": {
+      "main": [
+        [
+          {
+            "node": "Lead Exists?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lead Exists?": {
+      "main": [
+        [
+          {
+            "node": "Agile SDR Agent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Lead": {
+      "main": [
+        [
+          {
+            "node": "Agile SDR Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Agile SDR Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Conversation History": {
+      "ai_memory": [
+        [
+          {
+            "node": "Agile SDR Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agile SDR Agent": {
+      "main": [
+        [
+          {
+            "node": "Send WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send WhatsApp": {
+      "main": [
+        [
+          {
+            "node": "Sync Chatwoot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sync Chatwoot": {
+      "main": [
+        [
+          {
+            "node": "Save Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null
+}

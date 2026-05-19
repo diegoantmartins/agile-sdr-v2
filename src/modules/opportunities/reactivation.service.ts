@@ -1,8 +1,11 @@
+import { opportunityRepository } from './opportunity.repository';
+import { ResponseGenerator } from '../../domain/agent/response.generator';
+import { AgentConfigStore } from '../../domain/agent/agent-config.store';
+import { config as envConfig } from '../../config/env';
+import { prisma as dbPrisma } from '../../shared/db';
 import { logger } from '../../shared/logger';
 import { scoringService } from './scoring.service';
-import { messageBuilder } from '../messaging/message.builder';
 import { whatsappProvider } from '../messaging/whatsapp.provider';
-import { opportunityRepository } from './opportunity.repository';
 
 export interface ReactivationCandidate {
   id: string; // Budget ID
@@ -44,9 +47,36 @@ export class ReactivationService {
         reactivationReason: `Auto-reactivation for ${candidate.productName}`,
       });
 
-      const message = messageBuilder.buildFirstTouch({
-        name: candidate.contact.name,
-        projectName: candidate.projectName,
+      // 🤖 GERAÇÃO DE MENSAGEM VIA IA
+      const configStore = new AgentConfigStore(envConfig.AGENT_CONFIG_PATH, {} as any);
+      await configStore.init();
+      const agentConfig = configStore.getConfig();
+      
+      const generator = new ResponseGenerator(
+        envConfig.OPENAI_API_KEY || '',
+        envConfig.OPENAI_MODEL,
+        agentConfig as any
+      );
+
+      // Busca contexto para a IA
+      const lastMessages = await dbPrisma.message.findMany({
+        where: { lead: { phone: candidate.contact.phone } },
+        orderBy: { createdAt: 'desc' },
+        take: 3
+      });
+
+      const history = lastMessages.reverse().map(m => ({
+        role: (m.direction === 'incoming' ? 'user' : 'assistant') as 'user' | 'assistant',
+        content: m.content
+      }));
+
+      const message = await generator.generateReply({
+        leadName: candidate.contact.name || 'cliente',
+        phone: candidate.contact.phone,
+        incomingMessage: "[SISTEMA: GERE UMA MENSAGEM DE REATIVAÇÃO AMIGÁVEL BASEADA NO HISTÓRICO ACIMA. NÃO DIGA OLÁ SE JÁ CONVERSAMOS. PERGUNTE SOBRE O PROJETO OU OBRA ESPECÍFICA.]",
+        intent: 'TRIAGE',
+        score: score,
+        history: history as any
       });
 
       // Send via WhatsApp

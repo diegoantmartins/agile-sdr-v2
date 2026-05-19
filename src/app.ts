@@ -54,20 +54,24 @@ function resolveTenantId(request: any): string | null {
 
 // ======================== WEBHOOKS ========================
 
-app.post('/webhooks/uazapi', handleUazapiWebhook);
-app.post('/webhooks/uazapi/message', handleUazapiWebhook);
+if (env.UAZAPI_ENABLED) {
+  app.post('/webhooks/uazapi', handleUazapiWebhook);
+  app.post('/webhooks/uazapi/message', handleUazapiWebhook);
+}
 
-app.post('/webhooks/chatwoot/message-created', async (request, reply) => {
-  const authorized = isWebhookAuthorized(request.headers, {
-    expectedSecret: env.CHATWOOT_WEBHOOK_SECRET
+if (env.CHATWOOT_ENABLED) {
+  app.post('/webhooks/chatwoot/message-created', async (request, reply) => {
+    const authorized = isWebhookAuthorized(request.headers, {
+      expectedSecret: env.CHATWOOT_WEBHOOK_SECRET
+    });
+
+    if (!authorized) {
+      return reply.status(401).send({ error: 'Unauthorized webhook' });
+    }
+
+    await (webhookHandler as any).handleChatwoot(request, reply);
   });
-
-  if (!authorized) {
-    return reply.status(401).send({ error: 'Unauthorized webhook' });
-  }
-
-  await (webhookHandler as any).handleChatwoot(request, reply);
-});
+}
 
 // ======================== API - DASHBOARD ========================
 
@@ -511,9 +515,9 @@ app.post('/api/outbound/send', async (request, reply) => {
     return reply.status(400).send({ error: 'x-tenant-id header required' });
   }
 
-  const { phone, message, campaignTag } = request.body as any;
-  if (!phone || !message) {
-    return reply.status(400).send({ error: 'phone and message are required' });
+  const { phone, message: incomingMessage, campaignTag, dynamic = false } = request.body as any;
+  if (!phone) {
+    return reply.status(400).send({ error: 'phone is required' });
   }
 
   try {
@@ -528,7 +532,7 @@ app.post('/api/outbound/send', async (request, reply) => {
           tenantId,
           phone,
           name: 'Lead Outbound',
-          source: campaignTag || 'PROSPECCAO_OBRAS',
+          source: campaignTag || 'REATIVACAO_CLIENTE_ANTIGO',
           status: 'TRIAGE',
           score: 0
         }
@@ -536,47 +540,68 @@ app.post('/api/outbound/send', async (request, reply) => {
       logger.info({ phone, leadId: lead.id }, '[Outbound] Lead criado automaticamente');
     }
 
-    // 2. Enviar via WhatsApp (UAZAPI)
-    const sendResult = await uazapiClient.sendMessage({ phone, message });
+    // 2. Determinar a mensagem (Dinâmica ou Fixa)
+    let finalMessage = incomingMessage;
 
-    // 3. Salvar mensagem outgoing no banco (para a IA ter contexto na resposta)
+    if (dynamic || !incomingMessage || incomingMessage.includes('{{')) {
+      logger.info({ phone }, '[Outbound] Gerando mensagem dinâmica via IA...');
+      
+      const configStore = new AgentConfigStore(path.resolve(process.cwd(), 'data', 'agent-config.json'), {} as any);
+      await configStore.init();
+      const agentConfig = configStore.getConfig();
+
+      const generator = new ResponseGenerator(env.OPENAI_API_KEY || '', env.OPENAI_MODEL, agentConfig as any);
+      
+      finalMessage = await generator.generateReply({
+        leadName: lead.name || 'cliente',
+        phone: lead.phone,
+        incomingMessage: "[SISTEMA: GERE UMA ABORDAGEM INICIAL NATURAL PARA UM CLIENTE ANTIGO. NÃO USE 'Olá [Nome]' ROBÓTICO. SEJA CONVIDATIVO E VARIE A ESTRUTURA PARA EVITAR BANIMENTO.]",
+        intent: 'OUTBOUND_GREETING',
+        score: lead.score,
+        source: campaignTag || 'REATIVACAO_CLIENTE_ANTIGO'
+      });
+    }
+
+    // 3. Enviar via WhatsApp (UAZAPI)
+    const sendResult = await uazapiClient.sendMessage({ phone, message: finalMessage });
+
+    // 4. Salvar mensagem outgoing no banco
     await prisma.message.create({
       data: {
         leadId: lead.id,
         tenantId,
         direction: 'outgoing',
-        content: message,
+        content: finalMessage,
         channel: 'whatsapp',
-        isAiGenerated: false,
-        intentDetected: campaignTag || 'PROSPECCAO_OBRAS'
+        isAiGenerated: true,
+        intentDetected: campaignTag || 'REATIVACAO_CLIENTE_ANTIGO'
       }
     });
 
-    // 4. Atualizar lead com a data do último contato
+    // 5. Atualizar lead
     await prisma.activeLead.update({
       where: { id: lead.id },
       data: {
         lastMessageAt: new Date(),
-        messageCount: { increment: 1 }
+        messageCount: { increment: 1 },
+        source: campaignTag || 'REATIVACAO_CLIENTE_ANTIGO'
       }
     });
 
-    // 5. Sync com Chatwoot (não-bloqueante)
+    // 6. Sync com Chatwoot
     chatService.syncMessage({
       phone,
       name: lead.name || 'Lead',
-      message,
+      message: finalMessage,
       messageType: 'outgoing'
     }).catch(err => logger.warn({ err }, '[Outbound] Falha ao sincronizar com Chatwoot'));
-
-    logger.info({ phone, leadId: lead.id, messageId: sendResult.messageId }, '[Outbound] Mensagem enviada e registrada');
 
     return reply.status(200).send({
       success: true,
       leadId: lead.id,
       messageId: sendResult.messageId,
       phone,
-      message: 'Mensagem enviada e registrada no sistema'
+      sentMessage: finalMessage
     });
 
   } catch (error: any) {

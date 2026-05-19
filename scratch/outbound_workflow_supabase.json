@@ -1,0 +1,208 @@
+{
+  "name": "Agile SDR - Outbound Premium (Supabase Native)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": "={{ $json.rule }}"
+      },
+      "id": "trigger-schedule",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [ 100, 300 ]
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "table": "Budget",
+        "selectColumns": "*,Contact(*)",
+        "filters": {
+          "conditions": [
+            {
+              "column": "status",
+              "value": "approved"
+            }
+          ]
+        },
+        "options": {
+          "limit": 10
+        }
+      },
+      "id": "supabase-get-budgets",
+      "name": "Supabase: Find Budgets",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [ 300, 300 ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "replace_with_supabase_cred_id"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o-mini",
+        "options": {
+          "systemMessage": "Você é o Agile SDR. Sua tarefa é reativar um cliente que fez um orçamento de {{ $json.productName }} para o projeto {{ $json.projectName }}.\n\nSeja amigável e pergunte como está o andamento da obra ou se ele precisa de algo mais.\n\nNome do Cliente: {{ $json.Contact.name }}\nMáximo 400 caracteres."
+        }
+      },
+      "id": "ai-agent-outbound",
+      "name": "Outbound AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.4,
+      "position": [ 550, 300 ]
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o-mini",
+        "options": {}
+      },
+      "id": "openai-node-outbound",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [ 550, 450 ],
+      "credentials": {
+        "openAiApi": {
+          "id": "replace_with_openai_cred_id"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://synapsea.uazapi.com/message/send",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "9dc5f082-d000-46a3-8fe3-6161fb2426a5"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "phone",
+              "value": "={{ $node[\"Supabase: Find Budgets\"].json.Contact.phone }}"
+            },
+            {
+              "name": "message",
+              "value": "={{ $node[\"Outbound AI Agent\"].json.output }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "uazapi-send-outbound",
+      "name": "Send WhatsApp",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [ 800, 300 ]
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "table": "Opportunity",
+        "dataToInsert": {
+          "values": [
+            {
+              "column": "budgetId",
+              "value": "={{ $node[\"Supabase: Find Budgets\"].json.id }}"
+            },
+            {
+              "column": "contactId",
+              "value": "={{ $node[\"Supabase: Find Budgets\"].json.contactId }}"
+            },
+            {
+              "column": "stage",
+              "value": "reactivation_sent"
+            },
+            {
+              "column": "priorityScore",
+              "value": 50
+            },
+            {
+              "column": "reactivationReason",
+              "value": "Auto-reactivation n8n Native"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "supabase-create-opp",
+      "name": "Supabase: Create Opportunity",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [ 1000, 300 ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "replace_with_supabase_cred_id"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Supabase: Find Budgets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase: Find Budgets": {
+      "main": [
+        [
+          {
+            "node": "Outbound AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Outbound AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Outbound AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Send WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send WhatsApp": {
+      "main": [
+        [
+          {
+            "node": "Supabase: Create Opportunity",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null
+}

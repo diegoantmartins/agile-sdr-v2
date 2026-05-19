@@ -9,6 +9,7 @@ import { ExternalApiError } from '../../shared/utils/errors';
 export interface ChatwootConversation {
   id: number;
   contact_id: number;
+  status?: string;
   contact?: {
     id: number;
     name: string;
@@ -133,24 +134,18 @@ export class ChatwootClient {
     inboxId?: number
   ): Promise<ChatwootConversation> {
     try {
-      // Buscar conversas existentes do contato
+      // Buscar conversas existentes do contato específico
       const listResponse = await this.client.get(
-        `/api/v1/accounts/${this.accountId}/conversations`,
-        {
-          params: {
-            status: 'open',
-            filter: 'inbox'
-          }
-        }
+        `/api/v1/accounts/${this.accountId}/contacts/${contactId}/conversations`
       );
 
-      // Filtrar conversa do contato específico
+      // Pegar a conversa aberta mais recente
       const conversation = listResponse.data?.payload?.find(
-        (conv: ChatwootConversation) => conv.contact_id === contactId
-      );
+        (conv: ChatwootConversation) => conv.status === 'open'
+      ) || listResponse.data?.payload?.[0];
 
       if (conversation) {
-        logger.debug('[CHATWOOT] Conversa encontrada', { contactId, conversationId: conversation.id });
+        logger.debug('[CHATWOOT] Conversa encontrada para o contato', { contactId, conversationId: conversation.id });
         return conversation;
       }
 
@@ -217,6 +212,23 @@ export class ChatwootClient {
   }
 
   /**
+   * Listar conversas (opcionalmente filtrando por status)
+   */
+  async listConversations(params: { status?: string, page?: number } = {}): Promise<any[]> {
+    try {
+      logger.debug('[CHATWOOT] Listando conversas', params);
+      const response = await this.client.get(
+        `/api/v1/accounts/${this.accountId}/conversations`,
+        { params }
+      );
+      return response.data?.data?.payload || [];
+    } catch (error: any) {
+      logger.error('[CHATWOOT] Erro ao listar conversas:', error.message);
+      throw error;
+    }
+  }
+
+  /**
    * Adicionar etiquetas (labels) em uma conversa
    */
   async addLabels(conversationId: number, labels: string[]): Promise<string[]> {
@@ -275,6 +287,21 @@ export class ChatwootClient {
       return response.data;
     } catch (error: any) {
       logger.error('[CHATWOOT] Erro ao alterar status:', error.message);
+      throw error;
+    }
+  }
+
+  /**
+   * Deletar uma conversa permanentemente
+   */
+  async deleteConversation(conversationId: number): Promise<void> {
+    try {
+      logger.debug('[CHATWOOT] Deletando conversa permanentemente', { conversationId });
+      await this.client.delete(
+        `/api/v1/accounts/${this.accountId}/conversations/${conversationId}`
+      );
+    } catch (error: any) {
+      logger.error('[CHATWOOT] Erro ao deletar conversa:', error.message);
       throw error;
     }
   }
